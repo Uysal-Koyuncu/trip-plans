@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>加拿大西北两程 · 路书 + 地图</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --spruce:#1d332a; --spruce-deep:#142420;
+  --fog:#edf0ea; --paper:#f6f7f3;
+  --gravel:#857f70; --gold:#c8932c; --glacier:#54879c;
+  --ink:#20251f; --line:#c9ccc2; --star:#b05c2a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--fog);color:var(--ink);font-size:15px;line-height:1.65}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+header{background:var(--spruce);color:var(--fog);padding:34px 20px 0}
+.hd{max-width:780px;margin:0 auto}
+.hd-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+h1{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:700;font-size:clamp(32px,7vw,50px);line-height:1.08}
+.hd-sub{margin-top:12px;color:#b9c4ba;font-size:13.5px;max-width:56ch}
+.hd-stats{display:flex;margin-top:24px;border-top:1px solid rgba(237,240,234,.18)}
+.hd-stat{flex:1;padding:13px 0 17px;border-right:1px solid rgba(237,240,234,.18)}
+.hd-stat:last-child{border-right:none}
+.hd-stat:nth-child(n+2){padding-left:16px}
+.hd-stat .v{font-family:'Barlow Condensed',sans-serif;font-size:25px;font-weight:600}
+.hd-stat .k{font-size:11px;color:#93a397;letter-spacing:.05em}
+
+nav.tabs{position:sticky;top:0;z-index:1000;background:var(--spruce-deep);box-shadow:0 2px 10px rgba(20,36,32,.25)}
+.tabs-in{max-width:780px;margin:0 auto;display:flex}
+.tab{flex:1;appearance:none;border:none;cursor:pointer;background:transparent;color:#8fa295;font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:16px;font-weight:600;letter-spacing:.03em;padding:13px 8px 11px;border-bottom:3px solid transparent;transition:.15s}
+.tab .ts{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;font-weight:400;margin-top:2px;color:#6e8276}
+.tab[aria-selected="true"]{color:var(--fog);border-bottom-color:var(--gold)}
+.tab[aria-selected="true"] .ts{color:var(--gold)}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+
+/* shared map */
+#mapwrap{position:relative;background:#aab}
+#map{height:clamp(300px,52vh,520px);width:100%}
+#status{position:absolute;z-index:600;left:50%;top:12px;transform:translateX(-50%);background:rgba(20,36,32,.92);color:var(--fog);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;padding:6px 14px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:opacity .4s}
+#status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:7px;animation:p 1s infinite}
+@keyframes p{50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){#status .dot{animation:none}}
+.maplegend{max-width:780px;margin:0 auto;display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:9px 20px;font-size:11px;color:var(--gravel);background:var(--paper);border-bottom:1px solid var(--line)}
+.maplegend .lg{display:inline-flex;align-items:center;gap:6px}
+.maplegend .lg i{display:inline-block;width:24px;height:0;border-top-width:3px}
+.lg.road i{border-top:3px solid var(--spruce)}
+.lg.gravel i{border-top:3px dashed var(--gold)}
+.lg.ferry i{border-top:3px dashed var(--glacier)}
+.lg.star i{width:12px;height:12px;border:none;border-radius:50%;background:var(--gold)}
+.leaflet-popup-content{font-family:'Noto Sans SC',sans-serif;font-size:13px;margin:9px 12px}
+.leaflet-popup-content b{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:15px;color:var(--spruce)}
+.leaflet-popup-content .d{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--gold);display:block;margin-bottom:2px}
+
+main{max-width:780px;margin:0 auto;padding:26px 20px 70px}
+.trip{display:none}.trip.active{display:block}
+section+section{margin-top:38px}
+h2{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:21px;font-weight:600;color:var(--spruce);display:flex;align-items:center;gap:10px;margin-bottom:15px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.crit{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;padding:16px 18px 6px}
+.crit-item{display:flex;gap:12px;padding:9px 0 11px;border-bottom:1px dashed var(--line)}
+.crit-item:last-child{border-bottom:none}
+.crit-n{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--gold);min-width:18px}
+.crit-item p{font-size:13.5px}
+.crit-item strong{color:var(--spruce)}
+
+.seg-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.15em;color:var(--gravel);text-transform:uppercase;margin:28px 0 13px 46px}
+.trip .seg-label:first-of-type{margin-top:4px}
+.day{position:relative;padding:0 0 24px 46px}
+.day::before{content:"";position:absolute;left:14px;top:25px;bottom:-2px;border-left:3px solid var(--spruce)}
+.day.gravel::before{border-left-style:dashed;border-left-color:var(--gold)}
+.day.ferry::before{border-left-style:dashed;border-left-color:var(--glacier)}
+.day:last-child::before{display:none}
+.day::after{content:"";position:absolute;left:7px;top:7px;width:17px;height:17px;border-radius:50%;background:var(--fog);border:3px solid var(--spruce)}
+.day.gravel::after{border-color:var(--gold)}
+.day.ferry::after{border-color:var(--glacier);border-radius:3px}
+.day.star::after{background:var(--gold);border-color:var(--spruce)}
+.d-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.d-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.07em;color:#fff;background:var(--spruce);padding:2px 8px;border-radius:3px}
+.day.gravel .d-num{background:var(--gold)}
+.day.ferry .d-num{background:var(--glacier)}
+.d-route{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:600;font-size:18px;color:var(--spruce)}
+.d-km{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gravel)}
+.badge{font-size:11px;color:var(--gold);letter-spacing:.04em}
+.d-body{margin-top:5px;font-size:14px}
+.d-body ul{list-style:none;margin-top:2px}
+.d-body li{padding-left:14px;position:relative;margin-top:3px}
+.d-body li::before{content:"·";position:absolute;left:2px;color:var(--gold);font-weight:700}
+.hl{color:var(--star);font-weight:500}
+.d-stay{margin-top:8px;font-size:12.5px;color:var(--spruce);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:5px 10px;display:inline-block}
+.d-stay::before{content:"宿 ";color:var(--gravel);font-size:11px;letter-spacing:.1em}
+.opt{border-left:3px dashed var(--gravel)!important}
+.opt-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--gravel);border:1px solid var(--line);border-radius:3px;padding:1px 6px;margin-left:4px}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 18px;font-size:13.5px}
+.card ul{list-style:none}
+.card li{padding-left:14px;position:relative;margin-top:5px}
+.card li::before{content:"–";position:absolute;left:0;color:var(--gravel)}
+.card li:first-child{margin-top:0}
+.budget{width:100%;border-collapse:collapse;font-size:13px}
+.budget td{padding:7px 4px;border-bottom:1px dashed var(--line);vertical-align:top}
+.budget td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;white-space:nowrap;color:var(--spruce)}
+.budget tr.total td{border-bottom:none;font-weight:700;color:var(--spruce);padding-top:10px}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13.5px;cursor:pointer}
+.check label:last-child{border-bottom:none}
+.check input{margin-top:4px;accent-color:var(--spruce);width:15px;height:15px;flex:none}
+.check input:checked+span{color:var(--gravel);text-decoration:line-through}
+.note{margin-top:13px;font-size:12px;color:var(--gravel);border-top:1px solid var(--line);padding-top:9px;line-height:1.55}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.13em;color:var(--gravel);padding:0 20px 38px}
+@media(max-width:480px){main{padding:22px 14px 60px}.day{padding-left:40px}.seg-label{margin-left:40px}.hd-stat .v{font-size:20px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="hd-eyebrow">BC · Yukon · NWT · Rockies — Summer 2027 / 2028</div>
+    <h1>加拿大西北两程<br>路书 + 地图</h1>
+    <p class="hd-sub">一海一山一冰洋。第一程沿太平洋:Cassiar、Haida Gwaii、内湾航道。第二程从落基山起步,走完整条 Alaska Highway,在 Dempster 尽头把手伸进北冰洋。</p>
+    <div class="hd-stats">
+      <div class="hd-stat"><div class="v">17 + 22</div><div class="k">天数(两程)</div></div>
+      <div class="hd-stat"><div class="v">两条</div><div class="k">传奇公路 · 不重叠</div></div>
+      <div class="hd-stat"><div class="v">3 渡轮</div><div class="k">+ 1 北冰洋</div></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="行程切换">
+  <div class="tabs-in">
+    <button class="tab" role="tab" aria-selected="true" id="tab1" aria-controls="trip1" onclick="show(1)">第一程 · Cassiar 环线<span class="ts">17 DAYS · VAN–VAN · 海岸</span></button>
+    <button class="tab" role="tab" aria-selected="false" id="tab2" aria-controls="trip2" onclick="show(2)">第二程 · 落基山→北极<span class="ts">22 DAYS · CALGARY→WHITEHORSE</span></button>
+  </div>
+</nav>
+
+<div id="mapwrap">
+  <div id="map"></div>
+  <div id="status"><span class="dot"></span>正在加载真实公路走向…</div>
+</div>
+<div class="maplegend">
+  <span class="lg road"><i></i>铺装公路</span>
+  <span class="lg gravel"><i></i>砾石(Dempster)</span>
+  <span class="lg ferry"><i></i>渡轮/船程</span>
+  <span class="lg star"><i></i>高潮点</span>
+  <span style="flex-basis:100%;font-size:10px;line-height:1.5">驾驶段为真实公路几何,实时取自 OpenStreetMap(OSRM);取不到则回退示意直线。渡轮为近似海路。</span>
+</div>
+
+<main>
+
+<!-- ══════════ TRIP 1 ══════════ -->
+<div class="trip active" id="trip1" role="tabpanel" aria-labelledby="tab1">
+
+<section>
+  <h2>预订关键路径</h2>
+  <div class="crit">
+    <div class="crit-item"><div class="crit-n">1</div><p><strong>Gwaii Haanas 多日团</strong>(含 SGang Gwaay)——提前 4–6 个月。整条线最稀缺,先锁团期再倒推。</p></div>
+    <div class="crit-item"><div class="crit-n">2</div><p><strong>BC Ferries ×3</strong>:Skidegate 往返(车上船)+ Prince Rupert → Port Hardy(内湾航道,夏季隔日一班,车位最抢)。</p></div>
+    <div class="crit-item"><div class="crit-n">3</div><p><strong>租车</strong>:温哥华取还,不限公里 + 允许上渡轮。Cassiar(37 号)已全程铺装,主流公司不禁。</p></div>
+    <div class="crit-item"><div class="crit-n">4</div><p><strong>Haida Gwaii 与 Prince Rupert 住宿</strong>——岛上房源极少,早订。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>逐日路线 · 顺时针,Cassiar 北上后折返走海岸</h2>
+
+  <div class="seg-label">SEG 1 — 内陆西进 · Hwy 16</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 1</span><span class="d-route">温哥华 → Cache Creek</span><span class="d-km mono">~350 km</span></div>
+    <div class="d-body">Hwy 1 → 97 北上,落地日少开。<div class="d-stay">Cache Creek / Clinton 汽车旅馆</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 2</span><span class="d-route">→ Prince George</span><span class="d-km mono">~440 km</span></div>
+    <div class="d-body">转入 Hwy 16(Yellowhead)前的补给城。<div class="d-stay">Prince George</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 3</span><span class="d-route">→ Smithers</span><span class="d-km mono">~370 km</span></div>
+    <div class="d-body">Bulkley 河谷,Hudson Bay Mountain 雪峰下的小镇,氛围好。<div class="d-stay">Smithers</div></div>
+  </div>
+
+  <div class="seg-label">SEG 2 — Cassiar Highway(37 号)</div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 4</span><span class="d-route">Smithers → Kitwanga → Stewart / Hyder</span><span class="d-km mono">~420 km</span><span class="badge">★</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Kitwanga 看 Gitwangak 图腾柱,正式上 Cassiar</li>
+        <li>37A 支线 <span class="hl">Bear Glacier</span>(公路边直接看冰川)</li>
+        <li>傍晚 <span class="hl">Hyder, AK · Fish Creek 观熊平台</span>(7月中–8月鲑鱼洄游;回 Stewart 过加拿大海关,带护照)</li>
+      </ul>
+      <div class="d-stay">Stewart · Ripley Creek Inn(连住 2 晚)</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 5</span><span class="d-route">Stewart 全天</span></div>
+    <div class="d-body">
+      <ul><li><span class="hl">Salmon Glacier 观景路</span>(约 37 km 砾石,北美第五大冰川俯瞰点)+ 再访 Fish Creek</li></ul>
+      <div class="d-stay">同上</div>
+    </div>
+  </div>
+  <div class="day opt">
+    <div class="d-head"><span class="d-num">DAY 5+1/2</span><span class="d-route">Cassiar 北延 → Dease Lake 往返</span><span class="opt-tag">可选 +2 天</span></div>
+    <div class="d-body">想把 Cassiar 多吃一段就北上到 <span class="hl">Dease Lake</span>(Iskut、Stikine 荒野腹地),次日原路返回。不加则 Day 6 直接走海岸。
+      <div class="d-stay">Dease Lake(选择极少)</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 3 — 海岸 + Haida Gwaii</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 6</span><span class="d-route">Stewart → Prince Rupert</span><span class="d-km mono">~485 km</span></div>
+    <div class="d-body">下 37A 回 Kitwanga,Hwy 16 沿 Skeena 河谷西行至海边。晚餐 Cow Bay:螃蟹 / 大比目鱼。
+      <div class="d-stay">Prince Rupert · Crest Hotel(海景;按船期 1–2 晚)</div>
+    </div>
+  </div>
+  <div class="day ferry">
+    <div class="d-head"><span class="d-num">DAY 7</span><span class="d-route">渡轮 → Skidegate</span><span class="d-km mono">~7 h</span></div>
+    <div class="d-body">车上船,跨夏洛特皇后海峡。
+      <div class="d-stay">Queen Charlotte(Daajing Giids)/ Haida House(高端),早订</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 8</span><span class="d-route">Graham Island 北线</span><span class="d-km mono">单程 ~110 km</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">Haida Heritage Centre</span>(行前必看)</li>
+        <li>Masset · Old Massett 图腾柱 · <span class="hl">Tow Hill + North Beach</span> 雨林栈道</li>
+      </ul>
+      <div class="d-stay">Masset 或回 Queen Charlotte</div>
+    </div>
+  </div>
+  <div class="day star ferry">
+    <div class="d-head"><span class="d-num">DAY 9–12</span><span class="d-route">Gwaii Haanas 多日团</span><span class="badge">★★ 全程最高潮</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Zodiac/船宿,Moresby Camp / Sandspit 出发</li>
+        <li>温泉岛 · 雨林古村遗址 · <span class="hl">SGang Gwaay(Ninstints)世界遗产图腾柱</span></li>
+        <li>含 Parks Canada 强制 orientation</li>
+      </ul>
+      <div class="d-stay">团内安排(营地 / 船宿)</div>
+    </div>
+  </div>
+  <div class="day ferry">
+    <div class="d-head"><span class="d-num">DAY 13</span><span class="d-route">缓冲日 + 渡轮回 Prince Rupert</span><span class="d-km mono">~7 h</span></div>
+    <div class="d-body">留天气延误余量。<div class="d-stay">Prince Rupert</div></div>
+  </div>
+
+  <div class="seg-label">SEG 4 — 内湾航道 + 温哥华岛</div>
+  <div class="day star ferry">
+    <div class="d-head"><span class="d-num">DAY 14</span><span class="d-route">渡轮 → Port Hardy(Inside Passage)</span><span class="d-km mono">~16.5 h 白天</span><span class="badge">★</span></div>
+    <div class="d-body">晨发近午夜到港,全天甲板看鲸与峡湾。<div class="d-stay">Port Hardy · Kwa'lilas Hotel</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 15</span><span class="d-route">→ Telegraph Cove → Campbell River</span><span class="d-km mono">~250 km</span></div>
+    <div class="d-body"><span class="hl">Johnstone 海峡观鲸</span>(虎鲸)。<div class="d-stay">Campbell River / Courtenay</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 16</span><span class="d-route">→ Victoria</span><span class="d-km mono">~270 km</span></div>
+    <div class="d-body">途经 Cathedral Grove 千年冷杉;傍晚内港。<div class="d-stay">Victoria 市区</div></div>
+  </div>
+  <div class="day ferry">
+    <div class="d-head"><span class="d-num">DAY 17</span><span class="d-route">渡轮 Swartz Bay → Tsawwassen → 温哥华还车</span></div>
+    <div class="d-body">上午 Butchart Gardens 可选,下午摆渡回大陆还车。</div>
+  </div>
+</section>
+
+<section>
+  <h2>预算量级 · 单人</h2>
+  <div class="card">
+    <table class="budget">
+      <tr><td>租车 ~17 天不限公里 + 油</td><td>CAD 2,200–3,000</td></tr>
+      <tr><td>渡轮三段(车 + 人)</td><td>CAD 800–1,200</td></tr>
+      <tr><td>Gwaii Haanas 多日团</td><td>CAD 1,500–2,500</td></tr>
+      <tr><td>住宿 ~16 晚(双人分摊减半)</td><td>CAD 2,600–4,000</td></tr>
+      <tr class="total"><td>合计量级</td><td>CAD 5,500–8,500</td></tr>
+    </table>
+    <p class="note">2026 年中价格水平,仅作申请预算参考。</p>
+  </div>
+</section>
+</div><!-- /trip1 -->
+
+<!-- ══════════ TRIP 2 ══════════ -->
+<div class="trip" id="trip2" role="tabpanel" aria-labelledby="tab2">
+
+<section>
+  <h2>预订关键路径</h2>
+  <div class="crit">
+    <div class="crit-item"><div class="crit-n">1</div><p><strong>租车的两难</strong>:单程 Calgary 取 / Whitehorse 还,且要能上 Dempster 砾石路——两个条件叠加,大公司往往满足不了。现实解法常是<strong>两段租车</strong>:Calgary→Whitehorse 走高速段用一辆(异地还),再在 Whitehorse/Dawson 租一辆允许 Dempster 的本地车跑 Tuk 环线。出发前半年问死。</p></div>
+    <div class="crit-item"><div class="crit-n">2</div><p><strong>机票</strong>:EWR→Calgary 进,Whitehorse→EWR 出(多经温哥华/Air North)。单程两头,早订。</p></div>
+    <div class="crit-item"><div class="crit-n">3</div><p><strong>Eagle Plains Hotel</strong>(Dempster 中途唯一住宿,去回各一晚,房少)。</p></div>
+    <div class="crit-item"><div class="crit-n">4</div><p><strong>落基山住宿</strong>:Banff/Lake Louise/Jasper 旺季极贵且早满;<strong>Moraine Lake 私家车禁入,需预约接驳车</strong>。</p></div>
+    <div class="crit-item"><div class="crit-n">5</div><p>Kluane 冰原观光飞机(天气窗口制,到场再定班次)。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>逐日路线 · Calgary 单程到 Whitehorse</h2>
+
+  <div class="seg-label">SEG 1 — 落基山 · Calgary 起</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 1</span><span class="d-route">飞抵 Calgary · 取车 → Banff</span><span class="d-km mono">~130 km</span></div>
+    <div class="d-body">Banff 镇、硫磺山缆车、Bow 河谷。<div class="d-stay">Banff / Canmore</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 2</span><span class="d-route">→ Lake Louise + Moraine Lake</span><span class="d-km mono">~60 km</span><span class="badge">★</span></div>
+    <div class="d-body">
+      <ul><li><span class="hl">Moraine Lake</span>(接驳车预约)· Lake Louise 湖畔徒步 · Agnes 茶屋</li></ul>
+      <div class="d-stay">Lake Louise / Field</div>
+    </div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 3</span><span class="d-route">Icefields Parkway → Jasper</span><span class="d-km mono">~230 km</span><span class="badge">★★ 世界级公路</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Bow Lake · Peyto Lake · <span class="hl">哥伦比亚冰原 / Athabasca 冰川</span>(可上冰川 + 玻璃栈道)· Athabasca 瀑布</li>
+      </ul>
+      <div class="d-stay">Jasper(连住 2 晚)</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 4</span><span class="d-route">Jasper 全天</span></div>
+    <div class="d-body">
+      <ul><li>Maligne Canyon · Maligne Lake / Spirit Island · Pyramid Lake</li></ul>
+      <div class="d-stay">Jasper</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 2 — 北上接 Alaska Highway</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 5</span><span class="d-route">Jasper → Grande Prairie</span><span class="d-km mono">~440 km</span></div>
+    <div class="d-body">Hwy 40 经 Grande Cache,出落基山进入和平河农区。<div class="d-stay">Grande Prairie</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 6</span><span class="d-route">→ Dawson Creek(Mile 0)→ Fort Nelson</span><span class="d-km mono">~600 km</span><span class="badge">★ AK Highway 起点</span></div>
+    <div class="d-body"><span class="hl">Alaska Highway Mile 0 纪念碑</span>打卡,正式上 AK Highway。长途日。<div class="d-stay">Fort Nelson</div></div>
+  </div>
+
+  <div class="seg-label">SEG 3 — Alaska Highway 精华段</div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 7</span><span class="d-route">→ Muncho Lake</span><span class="d-km mono">~250 km</span><span class="badge">★</span></div>
+    <div class="d-body">Stone Mountain 省立公园 · Summit Lake(AK Hwy 最高点)· 石羊驯鹿常在路边。<div class="d-stay">Northern Rockies Lodge(湖畔木屋)</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 8</span><span class="d-route">→ Liard 温泉 → Watson Lake</span><span class="d-km mono">~320 km</span></div>
+    <div class="d-body"><span class="hl">Liard River 温泉</span>(务必泡;野牛群在路肩)· Watson Lake <span class="hl">Sign Post Forest</span>。<div class="d-stay">Watson Lake</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 9</span><span class="d-route">→ Whitehorse</span><span class="d-km mono">~440 km</span></div>
+    <div class="d-body">进育空首府,补给、换/取 Dempster 用车的窗口。SS Klondike 蒸汽船 · Beringia 博物馆。<div class="d-stay">Whitehorse</div></div>
+  </div>
+
+  <div class="seg-label">SEG 4 — Kluane</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 10</span><span class="d-route">→ Haines Junction · Kluane</span><span class="d-km mono">~160 km</span></div>
+    <div class="d-body">Kathleen Lake · Sheep Mountain 步道,公路边即大景。<div class="d-stay">Haines Junction</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 11</span><span class="d-route">Kluane 全天</span><span class="badge">★</span></div>
+    <div class="d-body"><span class="hl">冰原观光飞机</span>(Logan 峰 + 北美最大非极地冰原;天气不行顺延)+ King's Throne 徒步。<div class="d-stay">同上</div></div>
+  </div>
+
+  <div class="seg-label">SEG 5 — Klondike 北上</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 12</span><span class="d-route">→ Whitehorse → Carmacks</span><span class="d-km mono">~360 km</span></div>
+    <div class="d-body">Five Finger Rapids 观景台。<div class="d-stay">Carmacks(选择极少)</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 13</span><span class="d-route">→ Dawson City</span><span class="d-km mono">~360 km</span><span class="badge">★</span></div>
+    <div class="d-body">木板路淘金镇 · Diamond Tooth Gerties · Midnight Dome 看午夜阳光 · <span class="hl">Sourtoe Cocktail</span>(杯里一根真脚趾)。<div class="d-stay">Dawson City(连住 2 晚)</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 14</span><span class="d-route">Dawson 全天 · 备战 Dempster</span></div>
+    <div class="d-body">Dredge No.4 · Bonanza Creek · 车检:卫星通讯器、两条好备胎、备用油、挡风玻璃保护。<div class="d-stay">同上</div></div>
+  </div>
+
+  <div class="seg-label">SEG 6 — Dempster Highway · 一路向北</div>
+  <div class="day star gravel">
+    <div class="d-head"><span class="d-num">DAY 15</span><span class="d-route">Dawson → Eagle Plains</span><span class="d-km mono">~410 km 砾石</span><span class="badge">★</span></div>
+    <div class="d-body"><span class="hl">Tombstone 山脉</span>(Dempster 最美段)· Ogilvie 山区。<div class="d-stay">Eagle Plains Hotel(Km 371,加满油)</div></div>
+  </div>
+  <div class="day star gravel">
+    <div class="d-head"><span class="d-num">DAY 16</span><span class="d-route">→ 跨北极圈 → Inuvik</span><span class="d-km mono">~370 km 砾石</span><span class="badge">★</span></div>
+    <div class="d-body"><span class="hl">Arctic Circle 标志牌</span> · Peel River 与 Mackenzie River 两道车渡,进入西北地区。<div class="d-stay">Inuvik</div></div>
+  </div>
+  <div class="day star gravel">
+    <div class="d-head"><span class="d-num">DAY 17</span><span class="d-route">Inuvik ⇄ Tuktoyaktuk</span><span class="d-km mono">单程 ~150 km</span><span class="badge">★★ 终点</span></div>
+    <div class="d-body">2017 通车的全季公路,苔原 + pingo 冰核丘 · <span class="hl">Tuktoyaktuk:把手伸进北冰洋</span> · 因纽特社区导览。<div class="d-stay">回 Inuvik 或 Tuk 的 B&B</div></div>
+  </div>
+
+  <div class="seg-label">SEG 7 — 返 Whitehorse · 飞回</div>
+  <div class="day gravel">
+    <div class="d-head"><span class="d-num">DAY 18</span><span class="d-route">Inuvik → Eagle Plains</span><span class="d-km mono">~370 km 砾石</span></div>
+    <div class="d-body">原路返,两道车渡按水位排队。<div class="d-stay">Eagle Plains Hotel</div></div>
+  </div>
+  <div class="day gravel">
+    <div class="d-head"><span class="d-num">DAY 19</span><span class="d-route">→ Dawson City</span><span class="d-km mono">~410 km 砾石</span></div>
+    <div class="d-body">Tombstone 再过一遍,光线不同就是另一条路。<div class="d-stay">Dawson City</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 20</span><span class="d-route">→ Whitehorse</span><span class="d-km mono">~530 km 铺装</span></div>
+    <div class="d-body">还 Dempster 用车。<div class="d-stay">Whitehorse</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 21</span><span class="d-route">Whitehorse 机动 / 缓冲</span></div>
+    <div class="d-body">Miles Canyon、市区;吸收前段任何延误。<div class="d-stay">Whitehorse</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 22</span><span class="d-route">还车 · Whitehorse 飞回</span></div>
+    <div class="d-body">单程行程收尾。</div>
+  </div>
+</section>
+
+<section>
+  <h2>弹性模块</h2>
+  <div class="card">
+    <ul>
+      <li><strong>Golden Circle</strong>(+1.5–2 天):Haines Junction → Haines, AK → 渡轮 → Skagway → White Pass 回 Whitehorse,峡湾 + 淘金铁路。需过美国边境。</li>
+      <li>不想自驾 Dempster:Dawson 出发的 Tuk 多日团,或飞 Inuvik 再地面去 Tuk。</li>
+      <li>嫌单程还车贵:改成原路开回 Calgary(+3–4 天,AK Highway 返程再走一遍),省异地费与单程机票。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>预算量级 · 单人</h2>
+  <div class="card">
+    <table class="budget">
+      <tr><td>机票 EWR→YYC + YXY→EWR(单程两头)</td><td>USD 700–1,100</td></tr>
+      <tr><td>租车:高速段单程 + Dempster 本地车,~21 天 + 油</td><td>CAD 3,500–5,500</td></tr>
+      <tr><td>住宿 ~21 晚(落基山段偏贵)</td><td>CAD 3,500–5,500</td></tr>
+      <tr><td>冰原观光飞机 + 哥伦比亚冰原门票</td><td>CAD 400–600</td></tr>
+      <tr class="total"><td>合计量级</td><td>CAD 8,000–12,000</td></tr>
+    </table>
+    <p class="note">单程还车费与落基山旺季住宿是两个最大变量,把这趟拉得比第一程贵。2026 年中水平,仅作量级参考。</p>
+  </div>
+</section>
+</div><!-- /trip2 -->
+
+<!-- shared -->
+<section>
+  <h2>两程通用清单</h2>
+  <div class="card check">
+    <label><input type="checkbox"><span>中国护照 + 加拿大 TRV(有效美签可走加速;多次往返,两程共用)</span></label>
+    <label><input type="checkbox"><span>回美材料:H-1B approval notice、最近工资单、在职证明</span></label>
+    <label><input type="checkbox"><span>inReach 类卫星通讯器(无信号区以百公里计)</span></label>
+    <label><input type="checkbox"><span>防熊喷雾(当地买,不能上飞机)</span></label>
+    <label><input type="checkbox"><span>NJ 驾照即可,BC/AB/Yukon/NWT 承认美国驾照</span></label>
+  </div>
+</section>
+
+<section>
+  <h2>待核实清单 · 出发前 6 个月</h2>
+  <div class="card check">
+    <label><input type="checkbox"><span>Gwaii Haanas 运营商当年团期与价格</span></label>
+    <label><input type="checkbox"><span>BC Ferries 内湾航道夏季班期(隔日班的星期每年会变)</span></label>
+    <label><input type="checkbox"><span>单程 Calgary→Whitehorse 租车可行性与费用;Dempster 用车渠道</span></label>
+    <label><input type="checkbox"><span>Jasper 镇 2024 火灾后恢复状况(服务、步道开放)</span></label>
+    <label><input type="checkbox"><span>Moraine Lake 接驳车预约规则</span></label>
+    <label><input type="checkbox"><span>Eagle Plains Hotel / Tuk B&B 现状 · Dempster 两道车渡运营时间</span></label>
+    <label><input type="checkbox"><span>Hyder Fish Creek 观熊平台开放期(鲑鱼洄游年际浮动)</span></label>
+  </div>
+  <p class="note">勾选状态仅当前会话有效,刷新重置——正式跟踪建议搬进你的清单工具。</p>
+</section>
+
+</main>
+<footer>VANCOUVER · CASSIAR · HAIDA GWAII &nbsp;//&nbsp; CALGARY · ROCKIES · ALASKA HIGHWAY · ARCTIC OCEAN</footer>
+
+<script>
+const C={spruce:'#1d332a',gold:'#c8932c',glacier:'#54879c'};
+const map=L.map('map',{zoomControl:true}).setView([58,-128],4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:12,minZoom:3,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+
+function dot(g,ll,name,day,star){
+  L.circleMarker(ll,{radius:star?8:6,color:'#fff',weight:2,fillColor:star?C.gold:C.spruce,fillOpacity:1})
+   .bindPopup('<span class="d">'+(day||'')+'</span><b>'+name+'</b>').addTo(g);
+}
+function ferry(g,pts,boat){
+  L.polyline(pts,{color:C.glacier,weight:boat?3:3.5,dashArray:boat?'1 8':'11 9',lineCap:boat?'round':'butt',opacity:.95}).addTo(g);
+}
+function styleFor(k){return k==='gravel'?{color:C.gold,weight:4,opacity:1,dashArray:'7 6'}:{color:C.spruce,weight:4,opacity:.9};}
+function fbStyle(k){const s=styleFor(k);s.opacity=.5;s.dashArray='3 7';return s;}
+
+let pending=0,failed=0;
+function setStatus(){
+  const el=document.getElementById('status');
+  if(pending>0){el.style.opacity='1';el.innerHTML='<span class="dot"></span>正在加载真实公路走向… 剩 '+pending+' 段';return;}
+  el.innerHTML=failed>0?('✓ 已加载（'+failed+' 段未响应，回退直线）'):'✓ 真实公路走向已加载';
+  setTimeout(function(){el.style.opacity='0';},failed?4500:2000);
+}
+async function road(g,chain,kind){
+  pending++;setStatus();
+  const coords=chain.map(function(p){return p[1]+','+p[0];}).join(';');
+  const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
+  try{
+    const r=await fetch(url); if(!r.ok) throw 0;
+    const j=await r.json(); if(!j.routes||!j.routes[0]) throw 0;
+    L.polyline(j.routes[0].geometry.coordinates.map(function(c){return [c[1],c[0]];}),styleFor(kind)).addTo(g);
+  }catch(e){failed++;L.polyline(chain,fbStyle(kind)).addTo(g);}
+  finally{pending--;setStatus();}
+}
+
+/* TRIP 1 */
+const t1=L.layerGroup().addTo(map);
+const A={van:[49.283,-123.120],cache:[50.810,-121.325],pg:[53.917,-122.749],smi:[54.782,-127.168],
+  kit:[55.104,-128.052],bear:[56.160,-129.620],stew:[55.937,-129.990],dease:[58.437,-130.005],
+  pr:[54.312,-130.320],skid:[53.251,-132.001],mas:[54.012,-132.146],sand:[53.243,-131.821],
+  sgang:[52.097,-131.223],ph:[50.724,-127.493],tel:[50.547,-126.831],cr:[50.033,-125.272],vic:[48.428,-123.365]};
+road(t1,[A.van,A.cache,A.pg,A.smi,A.kit,A.stew],'road');
+road(t1,[A.stew,A.dease],'road');               // optional Cassiar north spur
+road(t1,[A.stew,A.kit,A.pr],'road');
+road(t1,[A.skid,A.mas],'road');
+road(t1,[A.ph,A.tel,A.cr,A.vic],'road');
+ferry(t1,[A.pr,A.skid]);ferry(t1,[A.pr,A.ph]);ferry(t1,[A.vic,A.van]);ferry(t1,[A.sand,A.sgang],true);
+dot(t1,A.van,'温哥华','DAY 1 · 17');dot(t1,A.cache,'Cache Creek','DAY 1');dot(t1,A.pg,'Prince George','DAY 2');
+dot(t1,A.smi,'Smithers','DAY 3');dot(t1,A.kit,'Kitwanga · 上 Cassiar','DAY 4');dot(t1,A.bear,'Bear Glacier','DAY 4');
+dot(t1,A.stew,'Stewart / Hyder','DAY 4–5',true);dot(t1,A.dease,'Dease Lake','可选北延');
+dot(t1,A.pr,'Prince Rupert','DAY 6 · 13');dot(t1,A.skid,'Skidegate · Haida Gwaii','DAY 7',true);
+dot(t1,A.mas,'Masset · Tow Hill','DAY 8');dot(t1,A.sand,'Sandspit 出发港','DAY 9');
+dot(t1,A.sgang,'SGang Gwaay 世界遗产','DAY 9–12',true);dot(t1,A.ph,'Port Hardy','DAY 14',true);
+dot(t1,A.tel,'Telegraph Cove 观鲸','DAY 15');dot(t1,A.cr,'Campbell River','DAY 15');dot(t1,A.vic,'Victoria','DAY 16');
+const B1=L.latLngBounds([A.van,A.dease,A.sgang,A.vic]);
+
+/* TRIP 2 */
+const t2=L.layerGroup();
+const B={cal:[51.045,-114.057],ban:[51.178,-115.571],ll:[51.425,-116.179],mor:[51.327,-116.186],
+  ice:[52.220,-117.220],jas:[52.873,-118.081],gp:[55.171,-118.801],dc:[55.760,-120.236],
+  fn:[58.805,-122.697],mun:[58.950,-125.770],lia:[59.423,-126.099],wat:[60.063,-128.709],
+  wh:[60.721,-135.057],hj:[60.752,-137.511],car:[62.089,-136.296],daw:[64.060,-139.433],
+  tomb:[64.510,-138.220],eag:[66.372,-136.718],arc:[66.563,-136.251],fmp:[67.438,-134.882],
+  inu:[68.361,-133.730],tuk:[69.444,-133.034]};
+road(t2,[B.cal,B.ban,B.ll,B.ice,B.jas],'road');           // Icefields Parkway
+road(t2,[B.jas,B.gp,B.dc,B.fn],'road');                    // north to AK Hwy
+road(t2,[B.fn,B.mun,B.lia,B.wat,B.wh],'road');             // Alaska Highway
+road(t2,[B.wh,B.hj],'road');
+road(t2,[B.hj,B.wh,B.car,B.daw],'road');                   // Klondike north
+road(t2,[B.daw,B.tomb,B.eag,B.arc,B.fmp,B.inu,B.tuk],'gravel'); // Dempster
+dot(t2,B.cal,'Calgary','DAY 1 起');dot(t2,B.ban,'Banff','DAY 1');dot(t2,B.ll,'Lake Louise','DAY 2',true);
+dot(t2,B.mor,'Moraine Lake','DAY 2');dot(t2,B.ice,'哥伦比亚冰原','DAY 3',true);dot(t2,B.jas,'Jasper','DAY 3–4',true);
+dot(t2,B.gp,'Grande Prairie','DAY 5');dot(t2,B.dc,'Dawson Creek · Mile 0','DAY 6',true);dot(t2,B.fn,'Fort Nelson','DAY 6');
+dot(t2,B.mun,'Muncho Lake','DAY 7',true);dot(t2,B.lia,'Liard 温泉','DAY 8');dot(t2,B.wat,'Watson Lake','DAY 8');
+dot(t2,B.wh,'Whitehorse','DAY 9 · 终','★');dot(t2,B.hj,'Haines Junction · Kluane','DAY 10');
+dot(t2,B.car,'Carmacks','DAY 12');dot(t2,B.daw,'Dawson City','DAY 13–14',true);dot(t2,B.tomb,'Tombstone','DAY 15',true);
+dot(t2,B.eag,'Eagle Plains','DAY 15 · 18');dot(t2,B.arc,'北极圈标志牌','DAY 16',true);dot(t2,B.fmp,'Fort McPherson','DAY 16');
+dot(t2,B.inu,'Inuvik','DAY 16 · 18');dot(t2,B.tuk,'Tuktoyaktuk · 北冰洋','DAY 17',true);
+const B2=L.latLngBounds([B.cal,B.tuk,B.hj,B.daw]);
+
+function show(n){
+  document.getElementById('tab1').setAttribute('aria-selected',n===1?'true':'false');
+  document.getElementById('tab2').setAttribute('aria-selected',n===2?'true':'false');
+  document.getElementById('trip1').classList.toggle('active',n===1);
+  document.getElementById('trip2').classList.toggle('active',n===2);
+  if(n===1){map.removeLayer(t2);t1.addTo(map);} else {map.removeLayer(t1);t2.addTo(map);}
+  map.invalidateSize();
+  map.fitBounds(n===1?B1:B2,{padding:[25,25]});
+  window.scrollTo({top:0});
+}
+map.fitBounds(B1,{padding:[25,25]});
+</script>
+</body>
+</html>

@@ -3,580 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Atlanta & The Smokies · 路书 + 地图 · Jun 2026</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<title>Trip Plans · 路书合集</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --red:#B83028; --forest:#2A4532; --gold:#C49A2A;
-  --ink:#16120E; --cream:#F8F4EE; --smoke:#8A9688;
-  --warm:#EDE9E2; --line:#D4CFC6; --paper:#F2EEE8;
-  --deep:#0E0C0A; --marta:#C8932C; --transit:#54879c;
+  --ink:#16120E;--cream:#F8F4EE;--paper:#F2EEE8;--line:#D4CFC6;
+  --forest:#2A4532;--gold:#C8932C;--smoke:#8A9688;--deep:#0E0C0A;
+  --spruce:#1d332a;--glacier:#54879c;--star:#b05c2a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--cream);color:var(--ink);font-size:14px;line-height:1.65}
-.mono{font-family:'IBM Plex Mono',monospace}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
 
-header{background:var(--deep);color:var(--cream);padding:36px 20px 0}
-.hd{max-width:800px;margin:0 auto}
-.hd-eye{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
-h1{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:700;font-size:clamp(34px,7vw,56px);line-height:1.0}
-h1 em{color:rgba(248,244,238,.35);font-style:italic;font-weight:500}
-.hd-sub{margin-top:10px;color:rgba(248,244,238,.55);font-size:13px;max-width:60ch}
-.hd-stats{display:flex;margin-top:22px;border-top:1px solid rgba(248,244,238,.1)}
-.hd-stat{flex:1;padding:12px 0 16px;border-right:1px solid rgba(248,244,238,.1)}
-.hd-stat:last-child{border-right:none}
-.hd-stat:nth-child(n+2){padding-left:16px}
-.hd-stat .v{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:600}
-.hd-stat .v.red{color:#E07060}
-.hd-stat .v.green{color:#7AB888}
-.hd-stat .v.gold{color:var(--gold)}
-.hd-stat .k{font-size:10px;color:rgba(248,244,238,.35);letter-spacing:.05em}
+header{background:var(--deep);color:var(--cream);padding:48px 24px 52px;text-align:center}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:14px}
+h1{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:700;font-size:clamp(36px,8vw,60px);line-height:1.05;letter-spacing:.01em}
+h1 em{color:rgba(248,244,238,.3);font-style:italic;font-weight:500}
+.subtitle{margin-top:12px;color:rgba(248,244,238,.5);font-size:14px;max-width:44ch;margin-left:auto;margin-right:auto}
 
-#mapwrap{position:relative;background:#b8c4b0}
-#map{height:clamp(320px,50vh,520px);width:100%}
-#status{position:absolute;z-index:600;left:50%;top:12px;transform:translateX(-50%);background:rgba(14,12,10,.9);color:var(--cream);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;padding:6px 14px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:opacity .4s}
-#status .dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--gold);margin-right:7px;animation:blink 1s infinite}
-@keyframes blink{50%{opacity:.25}}
-.maplegend{max-width:800px;margin:0 auto;display:flex;gap:14px;flex-wrap:wrap;align-items:center;padding:8px 20px;font-size:11px;color:var(--smoke);background:var(--paper);border-bottom:1px solid var(--line)}
-.maplegend .lg{display:inline-flex;align-items:center;gap:6px}
-.maplegend .lg i{display:inline-block;width:22px;height:0}
-.lg.road i{border-top:3px solid var(--forest)}
-.lg.hike i{border-top:3px dashed var(--gold)}
-.lg.transit i{border-top:3px dashed var(--transit)}
-.lg.star i{width:10px;height:10px;border:none;border-radius:50%;background:var(--red)}
-.leaflet-popup-content{font-family:'Noto Sans SC',sans-serif;font-size:12px;margin:8px 11px}
-.leaflet-popup-content b{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:14px;color:var(--forest)}
-.leaflet-popup-content .d{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;color:var(--gold);display:block;margin-bottom:2px}
+main{flex:1;max-width:860px;margin:0 auto;padding:40px 24px 60px;width:100%}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 
-main{max-width:800px;margin:0 auto;padding:28px 20px 70px}
-section+section{margin-top:36px}
-h2{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:20px;font-weight:600;color:var(--forest);display:flex;align-items:center;gap:10px;margin-bottom:14px}
-h2::after{content:"";flex:1;height:1px;background:var(--line)}
+.card{
+  background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  overflow:hidden;text-decoration:none;color:var(--ink);
+  transition:transform .2s,box-shadow .2s;
+  display:flex;flex-direction:column;
+}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.1)}
+.card:active{transform:translateY(-1px)}
 
-.seg-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;color:var(--smoke);text-transform:uppercase;margin:26px 0 12px 44px}
-.day{position:relative;padding:0 0 22px 44px}
-.day::before{content:"";position:absolute;left:13px;top:23px;bottom:-2px;border-left:3px solid var(--forest)}
-.day.hike::before{border-left-style:dashed;border-left-color:var(--gold)}
-.day.match::before{border-left-color:var(--red)}
-.day.drive::before{border-left-color:var(--smoke)}
-.day:last-child::before{display:none}
-.day::after{content:"";position:absolute;left:6px;top:6px;width:16px;height:16px;border-radius:50%;background:var(--cream);border:3px solid var(--forest)}
-.day.hike::after{border-color:var(--gold)}
-.day.match::after{background:var(--red);border-color:var(--red)}
-.day.drive::after{border-color:var(--smoke)}
-.day.star::after{background:var(--gold);border-color:var(--forest)}
-.d-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.d-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:.07em;color:#fff;padding:2px 7px;border-radius:3px;background:var(--forest)}
-.day.hike .d-num{background:var(--gold);color:var(--ink)}
-.day.match .d-num{background:var(--red)}
-.day.drive .d-num{background:var(--smoke)}
-.d-route{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:600;font-size:17px;color:var(--ink)}
-.d-km{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--smoke)}
-.badge{font-size:11px;color:var(--gold);letter-spacing:.03em}
-.d-body{margin-top:4px;font-size:13px}
-.d-body ul{list-style:none;margin-top:2px}
-.d-body li{padding-left:13px;position:relative;margin-top:3px}
-.d-body li::before{content:"·";position:absolute;left:2px;color:var(--gold);font-weight:700}
-.hl{color:var(--red);font-weight:500}
-.hlg{color:var(--forest);font-weight:500}
-.d-stay{margin-top:7px;font-size:12px;color:var(--forest);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:4px 10px;display:inline-block}
-.d-stay::before{content:"宿 ";color:var(--smoke);font-size:10px;letter-spacing:.1em}
-.tip{margin-top:6px;font-size:12px;color:var(--smoke);font-style:italic;padding-left:0}
+.card-banner{height:180px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.card-banner .bg-text{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:80px;
+  color:rgba(255,255,255,.08);letter-spacing:.05em;position:absolute;white-space:nowrap;
+}
 
-/* MARTA STEP BOX */
-.marta-box{background:#FBF6EC;border:1px solid var(--line);border-left:4px solid var(--marta);border-radius:5px;padding:16px 18px;margin-top:8px}
-.marta-title{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:15px;font-weight:600;color:#9A7320;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-.marta-leg{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--smoke);text-transform:uppercase;margin:12px 0 7px}
-.mstep{display:flex;gap:11px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:12.5px}
-.mstep:last-child{border-bottom:none}
-.mstep-n{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;color:var(--marta);min-width:16px}
-.mline{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:1px 6px;border-radius:3px;color:#fff;vertical-align:middle;margin:0 1px}
-.ml-red{background:#D14133}.ml-gold{background:#C8932C}.ml-bg{background:#3B7A52}
-.mstep b{color:var(--forest)}
+.card:nth-child(1) .card-banner{background:linear-gradient(135deg,#2A4532 0%,#1a5c3a 40%,#B83028 100%)}
+.card:nth-child(2) .card-banner{background:linear-gradient(135deg,#1d332a 0%,#2a4a3f 40%,#54879c 100%)}
 
-.trail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
-.tc{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:4px;padding:13px 15px;font-size:12.5px}
-.tc-name{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:16px;font-weight:600;color:var(--forest);margin-bottom:4px}
-.tc-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);letter-spacing:.05em;margin-bottom:6px}
-.tc ul{list-style:none}
-.tc li{padding-left:13px;position:relative;margin-top:3px}
-.tc li::before{content:"–";position:absolute;left:0;color:var(--smoke)}
-.tc-warn{font-size:11px;color:var(--red);margin-top:6px;font-style:italic}
+.card-icon{font-size:52px;position:relative;z-index:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.3))}
 
-.shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.shop{background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:13px 15px;font-size:12.5px}
-.shop-name{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:15px;font-weight:600;color:var(--forest)}
-.shop-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 6px;border-radius:3px;margin-left:6px;vertical-align:middle}
-.shop-tag.best{background:rgba(42,69,50,.12);color:var(--forest)}
-.shop-addr{font-size:11px;color:var(--smoke);margin:3px 0 5px}
-.shop-desc{line-height:1.6}
+.card-body{padding:20px 22px 24px;flex:1;display:flex;flex-direction:column}
+.card-tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;margin-bottom:8px;
+}
+.card:nth-child(1) .card-tag{color:var(--star)}
+.card:nth-child(2) .card-tag{color:var(--glacier)}
 
-.parking-box{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--forest);border-radius:4px;padding:14px 16px;font-size:13px;line-height:1.7}
+.card-title{
+  font-family:'Barlow Condensed','Noto Sans SC',sans-serif;
+  font-weight:700;font-size:22px;color:var(--forest);line-height:1.2;margin-bottom:8px;
+}
+.card-desc{font-size:13.5px;color:var(--smoke);line-height:1.6;flex:1}
+.card-stats{
+  display:flex;gap:16px;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--line);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--smoke)
+}
+.card-stats .sv{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:600;color:var(--forest);display:block}
+.card-go{
+  display:inline-flex;align-items:center;gap:6px;margin-top:14px;
+  font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:600;
+  letter-spacing:.04em;
+}
+.card:nth-child(1) .card-go{color:var(--star)}
+.card:nth-child(2) .card-go{color:var(--glacier)}
+.card-go::after{content:"→";transition:transform .2s}
+.card:hover .card-go::after{transform:translateX(4px)}
 
-.card{background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:16px 18px;font-size:13px}
-.budget{width:100%;border-collapse:collapse;font-size:13px}
-.budget td{padding:7px 4px;border-bottom:1px dashed var(--line);vertical-align:top}
-.budget td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;white-space:nowrap;color:var(--forest)}
-.budget td.pp{text-align:right;font-family:'IBM Plex Mono',monospace;color:var(--smoke)}
-.budget tr.done td{color:var(--smoke)}
-.budget tr.done td:last-child{color:var(--smoke)}
-.budget tr.total td{border-bottom:none;font-weight:700;color:var(--ink);padding-top:10px;border-top:2px solid var(--gold)}
-.budget tr.total td:last-child{color:var(--red);font-size:16px}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.13em;color:var(--smoke);padding:0 20px 32px}
 
-.check label{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13px;cursor:pointer}
-.check label:last-child{border-bottom:none}
-.check input{margin-top:3px;accent-color:var(--forest);width:14px;height:14px;flex:none}
-.check input:checked+span{color:var(--smoke);text-decoration:line-through}
-.done-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--smoke);border:1px solid var(--line);border-radius:3px;padding:1px 5px;margin-left:5px}
-.todo-tag{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--red);border:1px solid rgba(184,48,40,.3);border-radius:3px;padding:1px 5px;margin-left:5px}
-
-footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.13em;color:var(--smoke);padding:0 20px 36px}
-@media(max-width:500px){
-  main{padding:20px 14px 60px}.day{padding-left:38px}.seg-label{margin-left:38px}
-  .trail-grid,.shop-grid{grid-template-columns:1fr}.hd-stats{flex-wrap:wrap}
-  .hd-stat{flex:1 0 40%}
+@media(max-width:600px){
+  .grid{grid-template-columns:1fr;gap:20px}
+  .card-banner{height:140px}
+  .card-banner .bg-text{font-size:50px}
+  header{padding:36px 20px 40px}
 }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="hd">
-    <div class="hd-eye">FIFA World Cup 2026 · Great Smoky Mountains · Chattanooga</div>
-    <h1>ATLANTA &amp; <em>the Smokies</em></h1>
-    <p class="hd-sub">世界杯 + 大烟山 + 田纳西。EWR → ATL → Gatlinburg → Chattanooga → EWR，六天五夜。<br><span style="color:var(--gold);font-size:12px">⏰ 注意：ATL / 大烟山 = 东部时间(ET)；Chattanooga = 中部时间(CT)，慢1小时。各段时间均按当地时区标注。</span></p>
-    <div class="hd-stats">
-      <div class="hd-stat"><div class="v">6</div><div class="k">天数</div></div>
-      <div class="hd-stat"><div class="v red">Jun 18</div><div class="k">比赛日</div></div>
-      <div class="hd-stat"><div class="v">6</div><div class="k">步道 / 景点</div></div>
-      <div class="hd-stat"><div class="v gold">$1,266</div><div class="k">预算/人</div></div>
-    </div>
-  </div>
+  <div class="eyebrow">Road Trip Collection</div>
+  <h1>路书合集</h1>
+  <p class="subtitle">互动地图 + 逐日路线 + 预算清单，点击卡片查看完整路书</p>
 </header>
 
-<div id="mapwrap">
-  <div id="map"></div>
-  <div id="status"><span class="dot"></span>正在加载真实公路走向…</div>
-</div>
-<div class="maplegend">
-  <span class="lg road"><i></i>驾车路线</span>
-  <span class="lg transit"><i></i>MARTA 地铁（实际站点）</span>
-  <span class="lg hike"><i></i>步道</span>
-  <span class="lg star"><i></i>重点地点</span>
-  <span style="flex-basis:100%;font-size:10px;line-height:1.5">驾车段取自 OSRM 真实公路；地铁段沿 MARTA 实际车站坐标连线。右上角按钮可切换"亚特兰大市内 / 全程总览"。</span>
-</div>
-
 <main>
+  <div class="grid">
 
-<section>
-  <h2>逐日行程</h2>
-
-  <div class="seg-label">D1 — 出发 · 亚特兰大</div>
-  <div class="day star">
-    <div class="d-head"><span class="d-num">DAY 1</span><span class="d-route">Newark → Atlanta</span><span class="d-km mono">WED JUN 17</span></div>
-    <div class="d-body">
-      <ul>
-        <li>08:45 ET EWR 出发，United 直飞，11:08 ET 抵达 ATL</li>
-        <li>12:00 PM ET <span class="hlg">Avis 取车</span>（Rental Car Center），记录车牌号</li>
-        <li>取车后吃午饭，<span class="hl">2:00 PM ET Georgia Aquarium 入场</span>，想逛多久逛多久（全美最大水族馆，River + Ocean 两馆）</li>
-        <li>逛完回 Buckhead，3:00 PM ET 后 check in 酒店</li>
-      </ul>
-      <div class="d-stay">Hilton Garden Inn Atlanta-Buckhead · 1 King · $—</div>
-      <div class="tip">💡 顺序：取车 → 午饭 → 水族馆（2pm）→ check in。行李先放车上，水族馆在Downtown离Buckhead约15-20分钟</div>
-    </div>
-  </div>
-
-  <div class="seg-label">D2 — 世界杯比赛日 · 出发大烟山</div>
-  <div class="day match star">
-    <div class="d-head"><span class="d-num">DAY 2</span><span class="d-route">⚽ 捷克 vs 南非 → Gatlinburg</span><span class="d-km mono">THU JUN 18 · ~205mi</span><span class="badge">★</span></div>
-    <div class="d-body">
-      <p style="margin-bottom:4px">住 Buckhead 正好在 MARTA 红线上——<span class="hl">比赛日全程坐地铁，不用开车</span>。开球 12:00 PM ET，建议 09:30 ET 出门。</p>
-
-      <div class="marta-box">
-        <div class="marta-title">🚇 比赛日 MARTA 全攻略 <span style="font-size:10px;color:var(--smoke);font-weight:400">（均为东部时间 ET）</span></div>
-        <div style="font-size:12px;color:var(--smoke)">Buckhead 站就在酒店旁，步行可达。刷信用卡/手机钱包直接进闸，$2.50 单程，无需买实体卡。</div>
-
-        <div class="marta-leg">去程 · 约 35–40 分钟</div>
-        <div class="mstep"><span class="mstep-n">1</span><div>Buckhead 站上 <span class="mline ml-red">RED</span>（往 Airport 方向），坐到 <b>Five Points</b> 站，约 16–19 分钟</div></div>
-        <div class="mstep"><span class="mstep-n">2</span><div>Five Points 上一层到 <span class="mline ml-bg">BLUE/GREEN</span> 月台，往西（Hamilton E. Holmes / Bankhead 方向），哪趟先来坐哪趟</div></div>
-        <div class="mstep"><span class="mstep-n">3</span><div>坐 2 站到 <b>Vine City 站</b>，出站走加盖人行天桥<b>直达球场</b></div></div>
-
-        <div class="marta-leg">赛后返程</div>
-        <div class="mstep"><span class="mstep-n">1</span><div>从 <b>Vine City 站</b>上车（比 SEC District 站人少），<span class="mline ml-bg">BLUE/GREEN</span> 往东回 <b>Five Points</b></div></div>
-        <div class="mstep"><span class="mstep-n">2</span><div>Five Points 转 <span class="mline ml-red">RED</span>/<span class="mline ml-gold">GOLD</span> 往北（Buckhead 方向）回酒店。<b>看车头显示确认方向</b></div></div>
+    <a class="card" href="atlanta-smokies.html">
+      <div class="card-banner">
+        <span class="bg-text">ATLANTA · SMOKIES</span>
+        <span class="card-icon">⚽</span>
       </div>
-
-      <ul style="margin-top:10px">
-        <li>赛后回 Buckhead 酒店取车，正式出发</li>
-        <li><span class="hlg">顺 I-85 北上，依次逛三家店</span>（都在 Doraville/Brookhaven 一带，顺路不绕）：
-          <ul style="margin-top:3px">
-            <li><strong>Costco Brookhaven</strong> — <span class="hl">加油</span>（出发前加满）+ 买<span class="hl">大瓶水</span>、零食、面包</li>
-            <li><strong>H Mart Doraville</strong> — 亚洲食材、熟食、海鲜，美食广场可顺便吃晚饭</li>
-            <li><strong>Buford Hwy Market</strong> — 国际超市，三明治料、水果，补齐三天徒步口粮</li>
-          </ul>
-        </li>
-        <li>买完直接上 I-85N → I-985N → US-23/441 北上，约 3.5–4 小时抵 Gatlinburg</li>
-      </ul>
-      <div class="d-stay">Gatlinburg Airbnb Cabin · 4晚（6/18–22）</div>
-      <div class="tip">💡 开球前2-3小时各站很挤，09:30出门稳妥。赛后建议Vine City上车，避开SEC站人潮</div>
-    </div>
-  </div>
-
-  <div class="seg-label">D3–D4 — 大烟山国家公园</div>
-  <div class="day hike star">
-    <div class="d-head"><span class="d-num">DAY 3</span><span class="d-route">Charlies Bunion + Clingmans Dome</span><span class="d-km mono">FRI JUN 19</span><span class="badge">★</span></div>
-    <div class="d-body">
-      <ul>
-        <li>07:00 ET 出发，路过 <span class="hlg">Sugarlands Visitor Center 买停车证 $15/周</span>，开 Newfound Gap Road 至 Newfound Gap 停车场（13mi）</li>
-        <li><span class="hlg">Charlies Bunion（走 Appalachian Trail）</span>：8.1mi 往返，爬升 1,640ft，strenuous。沿山脊走，大烟山最佳全景之一。上山约2h，下山1.5h，约 <strong>半天</strong></li>
-        <li>回 Newfound Gap 后顺路开至 Clingmans Dome Road（旁边，7mi）</li>
-        <li><span class="hlg">Kuwohi（Clingmans Dome）</span>：0.5mi 陡坡，海拔 6,643ft，360° 全景，带外套</li>
-      </ul>
-      <div class="d-stay">Gatlinburg Airbnb</div>
-      <div class="tip">💡 Charlies Bunion 山脊暴露，夏天午后易雷暴，尽量早走。山顶比山下凉20°F</div>
-    </div>
-  </div>
-  <div class="day hike">
-    <div class="d-head"><span class="d-num">DAY 4</span><span class="d-route">Chimney Tops + Alum Cave + Cades Cove</span><span class="d-km mono">SAT JUN 20</span></div>
-    <div class="d-body">
-      <ul>
-        <li><span class="hl">06:00 ET 早出发看云海</span> — <span class="hlg">Chimney Tops</span>：3.3mi 往返，爬升 1,487ft，极陡（公园最陡短步道之一），终点观景台。清晨山谷常有云海/晨雾</li>
-        <li>下山后开车至 Alum Cave 步道口（Newfound Gap Rd 沿线）</li>
-        <li><span class="hlg">Alum Cave（到 Arch Rock 折返）</span>：2.8mi 往返，难度大降。Arch Rock 岩石隧道是精华段，折返不亏</li>
-        <li>下午回 Gatlinburg 休整，<span class="hl">傍晚开车去 Cades Cove 看动物</span>（约1.5h车程，11mi 环形车道，熊鹿野火鸡傍晚最活跃）</li>
-      </ul>
-      <div class="d-stay">Gatlinburg Airbnb</div>
-      <div class="tip">💡 Chimney Tops 最后1/4英里因火灾永久关闭，终点是观景台。Cades Cove 无需停车证，傍晚动物多但开车较远，量力而行</div>
-    </div>
-  </div>
-
-  <div class="seg-label">D5 — 南线 · Cherokee + 瀑布</div>
-  <div class="day hike">
-    <div class="d-head"><span class="d-num">DAY 5</span><span class="d-route">Deep Creek 三瀑布 + Cherokee 小镇</span><span class="d-km mono">SUN JUN 21 · ET</span></div>
-    <div class="d-body">
-      <ul>
-        <li>08:30 ET 出发，穿过公园（Newfound Gap Road）到南边，约 1h 到 Bryson City / Cherokee 一带</li>
-        <li><span class="hlg">Deep Creek Waterfall Loop</span>（Bryson City）：2.4mi 环线，<span class="hl">一次看三个瀑布</span>（Juney Whank / Tom Branch / Indian Creek），爬升 450ft，中等偏易，约 2–2.5h。评分 4.5★</li>
-        <li>午饭后去 <span class="hlg">Cherokee 小镇</span>：
-          <ul style="margin-top:3px">
-            <li><strong>Museum of the Cherokee People</strong> — 高互动，CGI + 实物，讲 12,000 年历史</li>
-            <li><strong>Oconaluftee Indian Village</strong> — 1760年代村落复原，工匠现场演示</li>
-            <li><strong>Mountain Farm Museum</strong> — 历史农场建筑群，常见麋鹿（在 Oconaluftee Visitor Center 旁）</li>
-            <li><strong>Qualla Arts & Crafts</strong> — 正宗 Cherokee 手工艺</li>
-          </ul>
-        </li>
-        <li>傍晚穿公园回 Gatlinburg（约 1h）</li>
-      </ul>
-      <div class="d-stay">Gatlinburg Airbnb（最后一晚，6/18–22 共4晚）</div>
-      <div class="tip">💡 Deep Creek 夏天也是热门漂流地。Cherokee 和 Deep Creek 都在公园南侧，一趟全包不绕路。麋鹿傍晚在 Oconaluftee 草地最常见</div>
-    </div>
-  </div>
-
-  <div class="seg-label">D6 — Chattanooga · 返程</div>
-  <div class="day drive">
-    <div class="d-head"><span class="d-num">DAY 6</span><span class="d-route">Gatlinburg → Chattanooga → CHA → EWR</span><span class="d-km mono">MON JUN 22 · ~150mi</span></div>
-    <div class="d-body">
-      <div style="background:#FBF6EC;border-left:3px solid var(--gold);padding:8px 12px;border-radius:0 4px 4px 0;font-size:12px;margin-bottom:8px">
-        ⏰ <strong>跨时区</strong>：Gatlinburg 是东部时间(ET)，Chattanooga 是<strong>中部时间(CT)，慢 1 小时</strong>。开车跨过去会"赚"1小时。还车和登机按 CT。
+      <div class="card-body">
+        <div class="card-tag">FIFA World Cup 2026</div>
+        <div class="card-title">Atlanta & the Smokies</div>
+        <p class="card-desc">世界杯观赛 + 大烟山国家公园徒步 + Chattanooga。EWR → ATL → Gatlinburg → Chattanooga → EWR，六天五夜。</p>
+        <div class="card-stats">
+          <div><span class="sv">6</span>天</div>
+          <div><span class="sv">Jun '26</span>时间</div>
+          <div><span class="sv">5</span>步道</div>
+        </div>
+        <div class="card-go">查看路书</div>
       </div>
-      <ul>
-        <li>07:30 ET 退房出发，I-40W → I-75S，约 2.5h 到 Chattanooga（跨入中部时区）</li>
-        <li>中午（CT）：Chattanooga 短逛——<span class="hlg">Lookout Mountain</span>（Rock City $25 / Ruby Falls $30 / Incline Railway $16）或 <span class="hlg">Tennessee Aquarium</span>（$35），二选一，时间有限</li>
-        <li>午饭：Bluff View Art District 或 Northshore</li>
-        <li>下午 <span class="hlg">CHA 机场还车（5:00 PM CT 前）</span>，Avis 营业 8AM–12AM CT</li>
-        <li>17:00 CT 还车，United 直飞 EWR，2h 21m（落地 EWR 是 ET）</li>
-      </ul>
-      <div class="tip">💡 今天既要开车又要赶飞机，Chattanooga 只能挑一个景点轻松逛。机票出发是 CT、到达 EWR 是 ET，照机票走即可</div>
-    </div>
-  </div>
-</section>
+    </a>
 
-<section>
-  <h2>🛒 比赛日买菜 · 顺路亚超</h2>
-  <p style="font-size:12.5px;color:var(--smoke);margin-bottom:10px">从球场回 Buckhead 取车后，顺 I-85 北上出城，正好经过 Doraville 亚超区——不绕路。买三明治食材、水、零食供三天徒步。</p>
-  <div class="shop-grid">
-    <div class="shop">
-      <div class="shop-name">Buford Highway Farmers Market<span class="shop-tag best">最推荐</span></div>
-      <div class="shop-addr">5600 Buford Hwy NE, Doraville · 8AM–9PM</div>
-      <div class="shop-desc">国际超市，中韩日泰墨食材全有，价格便宜（评分4.6/11000+）。三明治料、熟食、水果一站搞定。最顺路。</div>
-    </div>
-    <div class="shop">
-      <div class="shop-name">H Mart Doraville<span class="shop-tag best">亚超</span></div>
-      <div class="shop-addr">6035 Peachtree Rd, Doraville · 9AM–9PM</div>
-      <div class="shop-desc">亚特兰大最大韩超，比东岸大3倍，海鲜蔬菜熟食多，有美食广场。和 Buford Hwy 就在隔壁，二选一。</div>
-    </div>
-    <div class="shop">
-      <div class="shop-name">Costco Brookhaven</div>
-      <div class="shop-addr">500 Brookhaven Ave, Atlanta · 周四 10AM–8:30PM</div>
-      <div class="shop-desc">I-85 北上路边，水、面包、零食、熟食批量买最划算。有会员的话顺路。</div>
-    </div>
-    <div class="shop">
-      <div class="shop-name">出发提示</div>
-      <div class="shop-addr">买菜后直接上 I-85N → I-985N</div>
-      <div class="shop-desc">Doraville 几家超市都在 I-85 沿线，买完无缝接回北上高速去 Gatlinburg。带个保温袋装冷藏品。</div>
-    </div>
-  </div>
-</section>
+    <a class="card" href="bc-yukon.html">
+      <div class="card-banner">
+        <span class="bg-text">BC · YUKON · ARCTIC</span>
+        <span class="card-icon">🏔️</span>
+      </div>
+      <div class="card-body">
+        <div class="card-tag">Summer 2027 / 2028</div>
+        <div class="card-title">加拿大西北两程</div>
+        <p class="card-desc">一海一山一冰洋。第一程沿太平洋走 Cassiar + Haida Gwaii；第二程从落基山起步，走完 Alaska Highway，在 Dempster 尽头触碰北冰洋。</p>
+        <div class="card-stats">
+          <div><span class="sv">17+22</span>天</div>
+          <div><span class="sv">2</span>传奇公路</div>
+          <div><span class="sv">3+1</span>渡轮</div>
+        </div>
+        <div class="card-go">查看路书</div>
+      </div>
+    </a>
 
-<section>
-  <h2>步道路书</h2>
-  <div class="trail-grid">
-    <div class="tc">
-      <div class="tc-name">Charlies Bunion（AT）</div>
-      <div class="tc-meta">FRI JUN 19 · 上午 · 山脊全景</div>
-      <ul>
-        <li><strong>距离</strong>：8.1mi 往返（13km）</li>
-        <li><strong>海拔增益</strong>：1,640ft（500m）</li>
-        <li><strong>时间</strong>：上山~2h，下山~1.5h，半天</li>
-        <li><strong>难度</strong>：strenuous（多岩石）</li>
-        <li><strong>起点</strong>：Newfound Gap 停车场（US-441，Gatlinburg 南 13mi）</li>
-        <li>沿 Appalachian Trail 东行走山脊</li>
-        <li>裸岩观景点，大烟山最佳全景之一</li>
-      </ul>
-      <div class="tc-warn">⚠ 山脊暴露，夏季午后雷暴，早走早回</div>
-    </div>
-    <div class="tc">
-      <div class="tc-name">Kuwohi · Clingmans Dome</div>
-      <div class="tc-meta">FRI JUN 19 · 下午 · 公园最高峰</div>
-      <ul>
-        <li><strong>距离</strong>：0.5mi 单程至顶</li>
-        <li><strong>海拔</strong>：6,643ft（2,025m）</li>
-        <li><strong>时间</strong>：30 分钟 + 观景</li>
-        <li>从 Newfound Gap 顺路 7mi</li>
-        <li>螺旋坡道较陡，带外套</li>
-        <li>晴天可见 7 个州</li>
-      </ul>
-    </div>
-    <div class="tc">
-      <div class="tc-name">Chimney Tops</div>
-      <div class="tc-meta">SAT JUN 20 · 清晨 · 看云海</div>
-      <ul>
-        <li><strong>距离</strong>：3.3mi 往返（5.3km）</li>
-        <li><strong>海拔增益</strong>：1,487ft（453m）</li>
-        <li><strong>时间</strong>：约 2–2.5 小时</li>
-        <li><strong>难度</strong>：极陡（最后1mi爬升近千尺，大量台阶）</li>
-        <li><strong>起点</strong>：Newfound Gap Rd，Sugarlands 南 7mi</li>
-        <li><span style="color:var(--red)">06:00 前到，清晨山谷常有云海</span></li>
-      </ul>
-      <div class="tc-warn">⚠ 最后1/4mi因2016火灾永久关闭，终点为观景台</div>
-    </div>
-    <div class="tc">
-      <div class="tc-name">Alum Cave（半程）</div>
-      <div class="tc-meta">SAT JUN 20 · 上午 · 到 Arch Rock 折返</div>
-      <ul>
-        <li><strong>距离</strong>：2.8mi 往返（到 Arch Rock）</li>
-        <li><strong>海拔增益</strong>：约 600ft</li>
-        <li><strong>时间</strong>：约 1.5 小时</li>
-        <li><strong>起点</strong>：US-441，Gatlinburg 南 8.7mi</li>
-        <li>1.3mi — <strong>Arch Rock</strong> 岩石隧道（精华，折返点）</li>
-        <li>想加量可继续到 Bluffs（全程4.6mi）</li>
-      </ul>
-    </div>
-    <div class="tc">
-      <div class="tc-name">Cades Cove Loop</div>
-      <div class="tc-meta">SAT JUN 20 · 傍晚 · 看动物</div>
-      <ul>
-        <li><strong>路程</strong>：11mi 环形（单行道）</li>
-        <li><strong>时间</strong>：2–3 小时</li>
-        <li><strong>导航</strong>：Gatlinburg → Little River Rd，约 1.5h</li>
-        <li>熊、鹿、野火鸡傍晚最活跃</li>
-        <li>John Oliver Cabin 历史木屋</li>
-        <li><strong>无需停车证</strong></li>
-      </ul>
-      <div class="tc-warn">⚠ 离 Gatlinburg 较远，傍晚去注意回程天黑</div>
-    </div>
   </div>
-</section>
-
-<section>
-  <h2>大烟山停车须知</h2>
-  <div class="parking-box">
-    <strong>停车证</strong>（Parking Tag）：公园内停车超15分钟必须购买。<strong>$15/周</strong>覆盖整个行程。<br><br>
-    <strong>现场买</strong>：路过 <strong>Sugarlands Visitor Center</strong>（进公园主路上，US-441 旁）停2分钟，自动机器刷卡，打印后放副驾驶挡风玻璃前。<br><br>
-    <strong>Cades Cove Loop 无需停车证</strong>（纯驾车游览）。<br>
-    <span style="color:var(--smoke);font-size:12px">也可取车后在 recreation.gov 网购打印。</span>
-  </div>
-</section>
-
-<section>
-  <h2>预算 · 两人</h2>
-  <div class="card">
-    <table class="budget">
-      <tr style="font-size:10px;color:var(--smoke)">
-        <td>项目</td><td>说明</td><td style="text-align:right">总价</td><td style="text-align:right" class="pp">每人</td>
-      </tr>
-      <tr class="done"><td>✅ 机票</td><td>United EWR↔ATL+CHA，往返×2</td><td>$796</td><td class="pp">$398</td></tr>
-      <tr class="done"><td>✅ 租车</td><td>Avis，ATL取 CHA还，6天</td><td>~$420</td><td class="pp">$210</td></tr>
-      <tr class="done"><td>✅ ATL 酒店</td><td>Hilton Garden Inn Buckhead，6/17</td><td>~$160</td><td class="pp">$80</td></tr>
-      <tr class="done"><td>✅ Gatlinburg Airbnb</td><td>Cabin，6/18–22，4晚</td><td>~$730</td><td class="pp">$365</td></tr>
-      <tr class="done"><td>✅ 比赛票</td><td>StubHub，Sec 214 Row 3，×2张</td><td>$492</td><td class="pp">$246</td></tr>
-      <tr><td>停车证</td><td>GSMNP $15/周 × 1</td><td>$15</td><td class="pp">$8</td></tr>
-      <tr><td>买菜+餐饮+活动</td><td>4天食材+景点门票+杂费</td><td>~$320</td><td class="pp">$160</td></tr>
-      <tr class="total"><td>合计</td><td></td><td>~$3,033</td><td class="pp" style="color:var(--smoke);font-size:14px">~$1,517</td></tr>
-    </table>
-  </div>
-</section>
-
-<section>
-  <h2>待办清单</h2>
-  <div class="card check">
-    <label><input type="checkbox" checked><span>✅ 机票 <span class="done-tag">已订</span></span></label>
-    <label><input type="checkbox" checked><span>✅ Gatlinburg Airbnb cabin 4晚（6/18–22）<span class="done-tag">已订</span></span></label>
-    <label><input type="checkbox" checked><span>✅ 比赛票 · StubHub Sec 214 Row 3 <span class="done-tag">已订 · 6/15前到票</span></span></label>
-    <label><input type="checkbox" checked><span>✅ ATL 酒店 · Hilton Garden Inn Buckhead 6/17 <span class="done-tag">已订</span></span></label>
-    <label><input type="checkbox" checked><span>✅ 租车 · Avis ATL取 CHA还 <span class="done-tag">已订</span></span></label>
-    <label><input type="checkbox"><span>下载 FIFA World Cup 2026 App，用 StubHub 邮箱注册 FIFA ID <span class="todo-tag">待办</span></span></label>
-    <label><input type="checkbox"><span>取车后买大烟山停车证 $15/周（Sugarlands VC 现场）<span class="todo-tag">取车后</span></span></label>
-    <label><input type="checkbox"><span>Lookout Mountain 提前买票（Rock City/Ruby Falls，旺季易满）<span class="todo-tag">建议提前</span></span></label>
-    <label><input type="checkbox"><span>下载 MARTA 官方 app（实时列车追踪）<span class="todo-tag">行前</span></span></label>
-  </div>
-  <p style="font-size:11px;color:var(--smoke);margin-top:8px">勾选状态仅本次会话有效，刷新重置。</p>
-</section>
-
 </main>
-<footer>EWR · ATLANTA · GATLINBURG · GREAT SMOKY MOUNTAINS · CHATTANOOGA · EWR &nbsp;//&nbsp; JUN 17–22, 2026</footer>
 
-<script>
-const C={forest:'#2A4532',red:'#B83028',gold:'#C49A2A',smoke:'#8A9688',transit:'#54879c'};
-
-const map=L.map('map',{zoomControl:true}).setView([35.0,-83.8],7);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:14,minZoom:4,attribution:'© OpenStreetMap contributors'
-}).addTo(map);
-
-const P={
-  ewr:[40.6895,-74.1745],
-  atl_aquarium:[33.7634,-84.3951],
-  buckhead:[33.84841,-84.367018],
-  atl_stadium:[33.7553,-84.4006],
-  five_points:[33.753826,-84.391571],
-  vine_city:[33.7566,-84.4047],
-  hmart:[33.9077,-84.2880],
-  buford_mkt:[33.9057,-84.2738],
-  costco:[33.8726,-84.3370],
-  gatlinburg:[35.7143,-83.5129],
-  sugarlands:[35.6857,-83.5370],
-  newfound_gap:[35.6113,-83.4250],
-  charlies_bunion:[35.6259,-83.3736],
-  chimney_tops:[35.6347,-83.4731],
-  alum_cave:[35.6338,-83.4497],
-  clingmans:[35.5628,-83.4985],
-  cades_cove:[35.5920,-83.8440],
-  deep_creek:[35.4647,-83.4344],
-  cherokee:[35.4740,-83.3157],
-  chattanooga:[35.0456,-85.3097],
-  cha_airport:[35.0354,-85.2038],
-  lookout:[35.0085,-85.3406],
-  tn_aquarium:[35.0559,-85.3109],
-};
-
-// MARTA Red Line stations (Buckhead → Five Points), real station coords
-const REDLINE=[
-  [33.84841,-84.367018],  // Buckhead N7
-  [33.82317,-84.369540],  // Lindbergh Center N6
-  [33.78962,-84.387480],  // Arts Center N5
-  [33.78104,-84.386600],  // Midtown N4
-  [33.77205,-84.387000],  // North Avenue N3
-  [33.76616,-84.387640],  // Civic Center N2
-  [33.75932,-84.387440],  // Peachtree Center N1
-  [33.753826,-84.391571], // Five Points
-];
-// MARTA Blue/Green Line stations (Five Points → Vine City), real coords
-const WESTLINE=[
-  [33.753826,-84.391571], // Five Points
-  [33.7566,-84.4047],     // Vine City
-];
-
-let pending=0,failed=0;
-function setStatus(){
-  const el=document.getElementById('status');
-  if(pending>0){el.style.opacity='1';el.innerHTML='<span class="dot"></span>正在加载真实公路走向… 剩'+pending+'段';return;}
-  el.innerHTML=failed>0?('✓ 已加载（'+failed+'段回退示意线）'):'✓ 真实公路走向已加载';
-  setTimeout(()=>el.style.opacity='0',failed?4000:2000);
-}
-async function road(pts,color,dash){
-  pending++;setStatus();
-  const coords=pts.map(p=>p[1]+','+p[0]).join(';');
-  const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
-  try{
-    const r=await fetch(url);if(!r.ok)throw 0;
-    const j=await r.json();if(!j.routes||!j.routes[0])throw 0;
-    const latlngs=j.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-    L.polyline(latlngs,{color:color||C.forest,weight:4,opacity:.85,dashArray:dash||null}).addTo(map);
-  }catch(e){
-    failed++;
-    L.polyline(pts,{color:color||C.forest,weight:3,opacity:.5,dashArray:'5 7'}).addTo(map);
-  }finally{pending--;setStatus();}
-}
-function dot(ll,name,day,color,star){
-  L.circleMarker(ll,{radius:star?9:6,color:'#fff',weight:2,fillColor:color||C.forest,fillOpacity:1})
-   .bindPopup('<span class="d">'+(day||'')+'</span><b>'+name+'</b>').addTo(map);
-}
-
-// CITY DRIVING (real OSRM routes)
-road([P.atl_aquarium,P.buckhead],C.forest);          // 水族馆 → Buckhead 酒店
-road([P.buckhead,P.costco,P.hmart,P.buford_mkt],C.forest); // 酒店 → Costco → H Mart → Buford Hwy
-// INTERCITY DRIVING
-road([P.buford_mkt,P.gatlinburg],C.forest);          // 买菜 → Gatlinburg
-road([P.gatlinburg,P.chattanooga],C.smoke);          // Gatlinburg → Chattanooga
-
-// MARTA subway lines along REAL station coordinates
-L.polyline(REDLINE,{color:C.transit,weight:3.5,opacity:.9}).addTo(map);
-L.polyline(WESTLINE,{color:C.transit,weight:3.5,opacity:.9,dashArray:'2 6'}).addTo(map);
-// small station ticks along red line
-REDLINE.forEach((s,i)=>{
-  if(i>0&&i<REDLINE.length-1)
-    L.circleMarker(s,{radius:2.5,color:C.transit,weight:1,fillColor:'#fff',fillOpacity:1}).addTo(map);
-});
-
-// HIKE schematic
-[[P.gatlinburg,P.newfound_gap],[P.newfound_gap,P.charlies_bunion],[P.newfound_gap,P.clingmans],[P.gatlinburg,P.chimney_tops],[P.gatlinburg,P.alum_cave],[P.gatlinburg,P.cades_cove]].forEach(seg=>{
-  L.polyline(seg,{color:C.gold,weight:3,dashArray:'6 5',opacity:.8}).addTo(map);
-});
-// DAY 5 south route: Gatlinburg → Deep Creek/Cherokee (real road)
-road([P.gatlinburg,P.deep_creek],C.forest);
-
-dot(P.atl_aquarium,'Georgia Aquarium','DAY 1 · 2pm',C.forest,true);
-dot(P.buckhead,'Hilton Garden Inn Buckhead · 宿 · MARTA红线','DAY 1–2',C.forest,true);
-dot(P.atl_stadium,'Atlanta Stadium · 比赛','DAY 2 · 12pm',C.red,true);
-dot(P.vine_city,'Vine City 站 · 进出球场','DAY 2',C.transit);
-dot(P.five_points,'Five Points · 红线转蓝/绿线','DAY 2',C.transit);
-dot(P.costco,'Costco Brookhaven · 加油 + 买水','DAY 2',C.gold);
-dot(P.hmart,'H Mart Doraville · 亚洲食材 + 美食广场','DAY 2',C.gold);
-dot(P.buford_mkt,'Buford Hwy Market · 国际超市 + 口粮','DAY 2',C.gold);
-dot(P.gatlinburg,'Gatlinburg · Airbnb（4晚基地）','DAY 2–6',C.forest,true);
-dot(P.sugarlands,'Sugarlands VC · 买停车证','DAY 3–4',C.smoke);
-dot(P.newfound_gap,'Newfound Gap · Charlies Bunion 步道口','DAY 3',C.gold);
-dot(P.charlies_bunion,'Charlies Bunion · 山脊全景','DAY 3',C.gold,true);
-dot(P.clingmans,'Clingmans Dome 6,643ft','DAY 3',C.gold,true);
-dot(P.chimney_tops,'Chimney Tops · 清晨云海','DAY 4',C.gold,true);
-dot(P.alum_cave,'Alum Cave · 到 Arch Rock 折返','DAY 4',C.gold);
-dot(P.cades_cove,'Cades Cove Loop · 傍晚看动物','DAY 4',C.gold);
-dot(P.deep_creek,'Deep Creek · 三瀑布环线','DAY 5',C.gold,true);
-dot(P.cherokee,'Cherokee 小镇 · 博物馆+印第安村','DAY 5',C.forest,true);
-dot(P.lookout,'Lookout Mountain','DAY 6',C.forest,true);
-dot(P.tn_aquarium,'Tennessee Aquarium','DAY 6',C.forest);
-dot(P.chattanooga,'Chattanooga · 路过短逛','DAY 6',C.smoke,true);
-dot(P.cha_airport,'CHA · 还车 · 飞回','DAY 6',C.smoke);
-
-map.fitBounds([[33.4,-85.6],[36.1,-83.2]],{padding:[30,30]});
-
-// Zoom toggle buttons
-const ZoomCtl=L.control({position:'topright'});
-ZoomCtl.onAdd=function(){
-  const d=L.DomUtil.create('div','');
-  d.style.cssText='display:flex;flex-direction:column;gap:4px';
-  d.innerHTML='<button id="zATL" style="font:600 11px/1 \'Barlow Condensed\',sans-serif;letter-spacing:.05em;padding:7px 10px;background:#fff;border:1px solid #C4BFB5;border-radius:4px;cursor:pointer;color:#2A4532;box-shadow:0 1px 4px rgba(0,0,0,.15)">亚特兰大市内</button>'
-    +'<button id="zALL" style="font:600 11px/1 \'Barlow Condensed\',sans-serif;letter-spacing:.05em;padding:7px 10px;background:#fff;border:1px solid #C4BFB5;border-radius:4px;cursor:pointer;color:#2A4532;box-shadow:0 1px 4px rgba(0,0,0,.15)">全程总览</button>';
-  L.DomEvent.disableClickPropagation(d);
-  return d;
-};
-ZoomCtl.addTo(map);
-document.getElementById('zATL').onclick=()=>map.fitBounds([[33.74,-84.42],[33.92,-84.25]],{padding:[20,20]});
-document.getElementById('zALL').onclick=()=>map.fitBounds([[33.4,-85.6],[36.1,-83.2]],{padding:[30,30]});
-</script>
+<footer>ROAD TRIP COLLECTION &nbsp;//&nbsp; INTERACTIVE MAPS + DAILY ITINERARIES</footer>
 </body>
 </html>
