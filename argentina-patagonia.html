@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阿根廷巴塔哥尼亚 · 路书 + 地图</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --andes:#1a2e3e; --andes-deep:#0f1c26;
+  --fog:#edeae3; --paper:#f4f1eb;
+  --gravel:#7a6e60; --gold:#c89438; --ice:#4a9eb5;
+  --ink:#1c1a16; --line:#cdc8be; --wind:#b85c2a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--fog);color:var(--ink);font-size:15px;line-height:1.65}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+header{background:var(--andes);color:var(--fog);padding:34px 20px 0}
+.hd{max-width:780px;margin:0 auto}
+.hd-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--gold);text-transform:uppercase;margin-bottom:10px}
+h1{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:700;font-size:clamp(32px,7vw,50px);line-height:1.08}
+.hd-sub{margin-top:12px;color:#b0bfc4;font-size:13.5px;max-width:58ch}
+.hd-stats{display:flex;margin-top:24px;border-top:1px solid rgba(237,234,227,.18)}
+.hd-stat{flex:1;padding:13px 0 17px;border-right:1px solid rgba(237,234,227,.18)}
+.hd-stat:last-child{border-right:none}
+.hd-stat:nth-child(n+2){padding-left:16px}
+.hd-stat .v{font-family:'Barlow Condensed',sans-serif;font-size:25px;font-weight:600}
+.hd-stat .k{font-size:11px;color:#8a9fa8;letter-spacing:.05em}
+
+nav.tabs{position:sticky;top:0;z-index:1000;background:var(--andes-deep);box-shadow:0 2px 10px rgba(15,28,38,.3)}
+.tabs-in{max-width:780px;margin:0 auto;display:flex}
+.tab{flex:1;appearance:none;border:none;cursor:pointer;background:transparent;color:#7fa0ae;font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:16px;font-weight:600;letter-spacing:.03em;padding:13px 8px 11px;border-bottom:3px solid transparent;transition:.15s}
+.tab .ts{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.1em;font-weight:400;margin-top:2px;color:#507a8a}
+.tab[aria-selected="true"]{color:var(--fog);border-bottom-color:var(--gold)}
+.tab[aria-selected="true"] .ts{color:var(--gold)}
+.tab:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+
+#mapwrap{position:relative;background:#b0bfc8}
+#map{height:clamp(320px,85vh,900px);width:100%}
+#status{position:absolute;z-index:600;left:50%;top:12px;transform:translateX(-50%);background:rgba(15,28,38,.92);color:var(--fog);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.04em;padding:6px 14px;border-radius:20px;white-space:nowrap;box-shadow:0 2px 10px rgba(0,0,0,.3);transition:opacity .4s}
+#status .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:7px;animation:p 1s infinite}
+@keyframes p{50%{opacity:.3}}
+@media(prefers-reduced-motion:reduce){#status .dot{animation:none}}
+.maplegend{max-width:780px;margin:0 auto;display:flex;gap:16px;flex-wrap:wrap;align-items:center;padding:9px 20px;font-size:11px;color:var(--gravel);background:var(--paper);border-bottom:1px solid var(--line)}
+.maplegend .lg{display:inline-flex;align-items:center;gap:6px}
+.maplegend .lg i{display:inline-block;width:24px;height:0;border-top-width:3px}
+.lg.road i{border-top:3px solid var(--andes)}
+.lg.gravel i{border-top:3px dashed var(--gold)}
+.lg.ferry i{border-top:3px dashed var(--ice)}
+.lg.border-ln i{border-top:3px dotted var(--wind)}
+.lg.star i{width:12px;height:12px;border:none;border-radius:50%;background:var(--gold)}
+.leaflet-popup-content{font-family:'Noto Sans SC',sans-serif;font-size:13px;margin:9px 12px}
+.leaflet-popup-content b{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:15px;color:var(--andes)}
+.leaflet-popup-content .d{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--gold);display:block;margin-bottom:2px}
+
+main{max-width:780px;margin:0 auto;padding:26px 20px 70px}
+.trip{display:none}.trip.active{display:block}
+section+section{margin-top:38px}
+h2{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:21px;font-weight:600;color:var(--andes);display:flex;align-items:center;gap:10px;margin-bottom:15px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+
+.crit{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:6px;padding:16px 18px 6px}
+.crit-item{display:flex;gap:12px;padding:9px 0 11px;border-bottom:1px dashed var(--line)}
+.crit-item:last-child{border-bottom:none}
+.crit-n{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:var(--gold);min-width:18px}
+.crit-item p{font-size:13.5px}
+.crit-item strong{color:var(--andes)}
+
+.warn{background:#fff8f0;border:1px solid #e8c97a;border-left:4px solid var(--wind);border-radius:6px;padding:14px 18px;margin-bottom:18px;font-size:13.5px}
+.warn strong{color:var(--wind)}
+
+.seg-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.15em;color:var(--gravel);text-transform:uppercase;margin:28px 0 13px 46px}
+.trip .seg-label:first-of-type{margin-top:4px}
+.day{position:relative;padding:0 0 24px 46px}
+.day::before{content:"";position:absolute;left:14px;top:25px;bottom:-2px;border-left:3px solid var(--andes)}
+.day.gravel::before{border-left-style:dashed;border-left-color:var(--gold)}
+.day.ferry::before{border-left-style:dashed;border-left-color:var(--ice)}
+.day.border-x::before{border-left-style:dotted;border-left-color:var(--wind)}
+.day:last-child::before{display:none}
+.day::after{content:"";position:absolute;left:7px;top:7px;width:17px;height:17px;border-radius:50%;background:var(--fog);border:3px solid var(--andes)}
+.day.gravel::after{border-color:var(--gold)}
+.day.ferry::after{border-color:var(--ice);border-radius:3px}
+.day.border-x::after{border-color:var(--wind);background:rgba(184,92,42,.1)}
+.day.star::after{background:var(--gold);border-color:var(--andes)}
+.d-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.d-num{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.07em;color:#fff;background:var(--andes);padding:2px 8px;border-radius:3px}
+.day.gravel .d-num{background:var(--gold)}
+.day.ferry .d-num{background:var(--ice)}
+.day.border-x .d-num{background:var(--wind)}
+.d-route{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-weight:600;font-size:18px;color:var(--andes)}
+.d-km{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gravel)}
+.badge{font-size:11px;color:var(--gold);letter-spacing:.04em}
+.d-body{margin-top:5px;font-size:14px}
+.d-body ul{list-style:none;margin-top:2px}
+.d-body li{padding-left:14px;position:relative;margin-top:3px}
+.d-body li::before{content:"·";position:absolute;left:2px;color:var(--gold);font-weight:700}
+.hl{color:var(--wind);font-weight:500}
+.hlb{color:var(--andes);font-weight:500}
+.d-stay{margin-top:8px;font-size:12.5px;color:var(--andes);background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:5px 10px;display:inline-block}
+.d-stay::before{content:"宿 ";color:var(--gravel);font-size:11px;letter-spacing:.1em}
+
+.alt-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px}
+@media(max-width:560px){.alt-grid{grid-template-columns:1fr}}
+.alt-card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:14px 16px}
+.alt-card.rec{border-color:var(--gold);border-left-width:3px}
+.alt-n{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;color:var(--gold);text-transform:uppercase;margin-bottom:4px}
+.alt-card h3{font-family:'Barlow Condensed','Noto Sans SC',sans-serif;font-size:17px;font-weight:600;color:var(--andes);margin-bottom:6px;line-height:1.2}
+.alt-card p{font-size:12.5px;color:var(--gravel);line-height:1.5}
+.alt-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;padding:2px 7px;border-radius:3px;margin-top:6px;background:var(--fog);border:1px solid var(--line);color:var(--gravel)}
+.alt-card.rec .alt-tag{background:#fffaed;border-color:var(--gold);color:#8a6820}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 18px;font-size:13.5px}
+.card ul{list-style:none}
+.card li{padding-left:14px;position:relative;margin-top:5px}
+.card li::before{content:"–";position:absolute;left:0;color:var(--gravel)}
+.card li:first-child{margin-top:0}
+.budget{width:100%;border-collapse:collapse;font-size:13px}
+.budget td{padding:7px 4px;border-bottom:1px dashed var(--line);vertical-align:top}
+.budget td:last-child{text-align:right;font-family:'IBM Plex Mono',monospace;white-space:nowrap;color:var(--andes)}
+.budget tr.total td{border-bottom:none;font-weight:700;color:var(--andes);padding-top:10px}
+.check label{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--line);font-size:13.5px;cursor:pointer}
+.check label:last-child{border-bottom:none}
+.check input{margin-top:4px;accent-color:var(--andes);width:15px;height:15px;flex:none}
+.check input:checked+span{color:var(--gravel);text-decoration:line-through}
+.note{margin-top:13px;font-size:12px;color:var(--gravel);border-top:1px solid var(--line);padding-top:9px;line-height:1.55}
+footer{text-align:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.13em;color:var(--gravel);padding:0 20px 38px}
+@media(max-width:480px){main{padding:22px 14px 60px}.day{padding-left:40px}.seg-label{margin-left:40px}.hd-stat .v{font-size:20px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <div class="hd-eyebrow">Argentine Patagonia Road Trip — 12月–3月</div>
+    <h1>阿根廷巴塔哥尼亚<br>路书 + 地图</h1>
+    <p class="hd-sub">布宜诺斯艾利斯到乌斯怀亚。荒原、冰川、世界尽头。四十号公路——南半球最长的孤独。</p>
+    <div class="hd-stats">
+      <div class="hd-stat"><div class="v">3,500–4,000</div><div class="k">全程公里数</div></div>
+      <div class="hd-stat"><div class="v">2–3 周</div><div class="k">推荐行程长度</div></div>
+      <div class="hd-stat"><div class="v">1 次</div><div class="k">智利过境（乌斯怀亚）</div></div>
+      <div class="hd-stat"><div class="v">12–3 月</div><div class="k">唯一可靠季节</div></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="行程切换">
+  <div class="tabs-in">
+    <button class="tab" role="tab" aria-selected="true" id="tab1" aria-controls="trip1" onclick="show(1)">精华段 · 巴里洛切→卡拉法特<span class="ts">推荐 · 10–14 DAYS · 无跨境</span></button>
+    <button class="tab" role="tab" aria-selected="false" id="tab2" aria-controls="trip2" onclick="show(2)">南延 · 卡拉法特→乌斯怀亚<span class="ts">+5–6 DAYS · 必须过境智利</span></button>
+  </div>
+</nav>
+
+<div id="mapwrap">
+  <div id="map"></div>
+  <div id="status"><span class="dot"></span>正在加载公路走向…</div>
+</div>
+<div class="maplegend">
+  <span class="lg road"><i></i>铺装公路</span>
+  <span class="lg gravel"><i></i>砾石路（Ripio）</span>
+  <span class="lg ferry"><i></i>渡轮 / 海峡</span>
+  <span class="lg border-ln"><i></i>智利过境</span>
+  <span class="lg star"><i></i>高潮点</span>
+  <span style="flex-basis:100%;font-size:10px;line-height:1.5">公路走向取自 OpenStreetMap（OSRM 实时路由）。Ruta 40 砾石段覆盖可能不完整，部分路段以示意直线代替。</span>
+</div>
+
+<main>
+
+<!-- ══════════ TRIP 1 ══════════ -->
+<div class="trip active" id="trip1" role="tabpanel" aria-labelledby="tab1">
+
+<section>
+  <h2>预订关键路径</h2>
+  <div class="crit">
+    <div class="crit-item"><div class="crit-n">1</div><p><strong>租车：巴里洛切取车，卡拉法特还车（异地单程）</strong>——需核实是否允许驶上 Ruta 40 砾石段；异地费用通常较高。推荐 SUV 或高底盘车，确认配备备用轮胎。</p></div>
+    <div class="crit-item"><div class="crit-n">2</div><p><strong>Perito Moreno 冰川参观</strong>——旺季（12–2 月）须提前预约入场时段；冰川漫步（Mini Trekking）和船游（Safari Náutico）需分别预约，且常满。</p></div>
+    <div class="crit-item"><div class="crit-n">3</div><p><strong>El Chaltén 旺季住宿</strong>——小镇容量极有限，12–2 月旺季须提前 2–3 个月订，否则只剩高价床位。</p></div>
+    <div class="crit-item"><div class="crit-n">4</div><p><strong>Cueva de las Manos 导览</strong>——洞穴须跟导游进入，提前确认当季班次与出发点（通常从 Perito Moreno 镇或洞穴入口）。</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>逐日路线 · 飞抵巴里洛切起</h2>
+
+  <div class="seg-label">SEG 1 — 湖区 · 安第斯山脚</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 1</span><span class="d-route">抵达 巴里洛切</span></div>
+    <div class="d-body">飞抵取车，适应节奏，湖边散步，确认后续住宿。<div class="d-stay">巴里洛切</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 2</span><span class="d-route">巴里洛切 全天</span><span class="badge">★</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">Circuito Chico</span>——纳韦尔瓦皮湖环湖公路，安第斯湖景精华</li>
+        <li>Cerro Campanario 缆车，山顶俯瞰七湖全景</li>
+        <li>市区巧克力街区（可选，巴里洛切以此著称）</li>
+      </ul>
+      <div class="d-stay">巴里洛切</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 3</span><span class="d-route">巴里洛切 → El Bolsón → Esquel</span><span class="d-km mono">~230 km 铺装</span></div>
+    <div class="d-body">El Bolsón 有机市集小镇，适合午餐停留。Esquel 是进入 Ruta 40 南段前最后一个正经补给城。<div class="d-stay">Esquel</div></div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 4</span><span class="d-route">Esquel 全天</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Los Alerces 国家公园——Lago Menéndez 船游可近距离看两千岁巨柏（Alerce）</li>
+        <li>可选：La Trochita 旧巴塔哥尼亚快车（蒸汽小火车，定期班次，需提前查时刻）</li>
+      </ul>
+      <div class="d-stay">Esquel</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 2 — Ruta 40 南下 · 草原与孤寂</div>
+  <div class="day gravel">
+    <div class="d-head"><span class="d-num">DAY 5</span><span class="d-route">Esquel → Perito Moreno（镇）</span><span class="d-km mono">~500 km 混铺 / 砾石</span></div>
+    <div class="d-body">全天长途，景观由安第斯逐渐过渡为巴塔哥尼亚草原。油站间距可达 200 km——<span class="hl">经过每个油站必须加满，不赌油量</span>。<div class="d-stay">Perito Moreno（镇）</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 6</span><span class="d-route">Perito Moreno 镇 → Cueva de las Manos</span><span class="d-km mono">往返 ~110 km</span><span class="badge">★</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">Cueva de las Manos</span>——距今 9,000 年的手形岩画，UNESCO 世界遗产；须跟导游进入</li>
+        <li>注意：Perito Moreno 镇与 Perito Moreno 冰川同名，相距约 700 km，勿混淆</li>
+      </ul>
+      <div class="d-stay">Perito Moreno（镇）</div>
+    </div>
+  </div>
+  <div class="day star gravel">
+    <div class="d-head"><span class="d-num">DAY 7</span><span class="d-route">Perito Moreno 镇 → Bajo Caracoles → 荒原穿越</span><span class="d-km mono">~200 km 砾石</span><span class="badge">★★ 荒原体验</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Ruta 40 最孤寂一段：200 km 内几乎无建筑，零手机信号，360° 草原天际线</li>
+        <li><span class="hl">随时可停车走向草原深处——完全的旷野与风声</span>；这是整条线"荒原体验"的绝对高潮</li>
+        <li>Bajo Caracoles：加满油（这里有站）+ 确认车况，前方仍是无人区</li>
+      </ul>
+      <div class="d-stay">Bajo Caracoles 唯一旅馆（条件简陋，须提前确认当季开放）</div>
+    </div>
+  </div>
+  <div class="day gravel">
+    <div class="d-head"><span class="d-num">DAY 8</span><span class="d-route">Bajo Caracoles → El Chaltén</span><span class="d-km mono">~290 km 砾石→铺装</span></div>
+    <div class="d-body">继续南行，Ruta 40 逐渐恢复铺装，远处 <span class="hl">菲茨罗伊（Fitz Roy）</span>花岗岩峰群在地平线上从无到有。<div class="d-stay">El Chaltén</div></div>
+  </div>
+
+  <div class="seg-label">SEG 3 — El Chaltén · 徒步资本</div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 9</span><span class="d-route">El Chaltén · Laguna de los Tres</span><span class="badge">★★★</span></div>
+    <div class="d-body">
+      <ul>
+        <li>往返 ~22 km，累计爬升约 900 m，全天徒步</li>
+        <li><span class="hl">Laguna de los Tres</span>：菲茨罗伊峰正面倒影，晴天无以伦比；日出金光（Alpenglow）需赶早出发</li>
+        <li>El Chaltén 内所有步道免费，无需预约</li>
+      </ul>
+      <div class="d-stay">El Chaltén</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 10</span><span class="d-route">El Chaltén · Laguna Torre 或备用天</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Laguna Torre 往返 ~18 km——Cerro Torre 矛尖峰，更野，游客更少</li>
+        <li>若 DAY 9 天气不佳，今日作 Laguna de los Tres 的好天气备档</li>
+        <li>El Chaltén 周边天气多变，保持弹性</li>
+      </ul>
+      <div class="d-stay">El Chaltén</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 4 — El Calafate · Perito Moreno 冰川</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 11</span><span class="d-route">El Chaltén → El Calafate</span><span class="d-km mono">~215 km 铺装</span></div>
+    <div class="d-body">Ruta 40 南段铺装，阿根廷湖（Lago Argentino）沿岸公路，视野开阔。下午抵达，确认明日冰川预约。<div class="d-stay">El Calafate</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 12</span><span class="d-route">Perito Moreno 冰川 全天</span><span class="badge">★★★</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">栈道观景区</span>：多层步道俯瞰冰舌全景，随时可听见冰裂轰鸣，含园区票免费进入</li>
+        <li>可选：<span class="hl">Mini Trekking</span>——穿爪钉靴踏上冰川表面，约 USD 120，须提前预约</li>
+        <li>可选：<span class="hl">Safari Náutico</span>——小船贴近冰壁，冰蓝与白色近在咫尺</li>
+      </ul>
+      <div class="d-stay">El Calafate</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 13</span><span class="d-route">El Calafate · 机动 / 飞出</span></div>
+    <div class="d-body">精华段到此收尾：还车，飞回布宜诺斯艾利斯（约 3 h，每日多班）。若继续南延接 Tab 2，改道行驶。<div class="d-stay">按后续安排</div></div>
+  </div>
+</section>
+
+</div><!-- /trip1 -->
+
+<!-- ══════════ TRIP 2 ══════════ -->
+<div class="trip" id="trip2" role="tabpanel" aria-labelledby="tab2">
+
+<div class="warn">
+  <strong>⚠ 最大物流障碍</strong>：由陆路抵达乌斯怀亚，必须过境智利（阿根廷本土侧无直连路线通往火地岛）。大多数阿根廷租车公司<strong>明确禁止</strong>车辆驶入智利。参见页面底部"租车跨境"章节了解三种解法，并在预订前取得书面确认。
+</div>
+
+<section>
+  <h2>逐日路线 · 卡拉法特起（衔接精华段 DAY 13）</h2>
+
+  <div class="seg-label">SEG 5 — 大陆最南端</div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 14</span><span class="d-route">El Calafate → Río Gallegos</span><span class="d-km mono">~310 km 铺装</span></div>
+    <div class="d-body">Ruta 3 东向，草原和风，纯过渡驾驶日，无特别景点。<div class="d-stay">Río Gallegos</div></div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 15</span><span class="d-route">Río Gallegos → Cabo Vírgenes 往返 + 留城</span><span class="d-km mono">~130 km 往返</span><span class="badge">★</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">Cabo Vírgenes</span>：大陆最东南端，俯瞰麦哲伦海峡；麦哲伦企鹅保护区（游客极少，与 Puerto Madryn 形成对比）</li>
+        <li>海峡对岸即为智利，强风呼啸，大地与海的边界感极强</li>
+      </ul>
+      <div class="d-stay">Río Gallegos</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 6 — 过境智利 · 蓬塔阿雷纳斯</div>
+  <div class="day border-x">
+    <div class="d-head"><span class="d-num">DAY 16</span><span class="d-route">Río Gallegos → 过境 → Punta Arenas（智利）</span><span class="d-km mono">~240 km + 边检</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">Monte Aymond 口岸</span>：阿根廷→智利，通常 30 分钟至 2 小时，旺季可能更长</li>
+        <li>须出示租车跨境许可文件（Permiso de Circulación），无文件则被拦</li>
+        <li>蓬塔阿雷纳斯：麦哲伦探险史博物馆、中心广场大教堂，面朝麦哲伦海峡的港湾城市</li>
+      </ul>
+      <div class="d-stay">Punta Arenas，智利</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 17</span><span class="d-route">Punta Arenas 全天</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Otway Sound 企鹅群落（10–3 月）或乘船去 <span class="hl">Isla Magdalena</span>（更多企鹅，约 2 h 单程，需提前预约）</li>
+        <li>Cueva del Milodón 洞穴自然保护区（史前巨型地懒化石发现地）</li>
+        <li>换汇：智利比索 + 确认次日渡轮信息</li>
+      </ul>
+      <div class="d-stay">Punta Arenas</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 7 — 麦哲伦海峡渡轮 · 踏上火地岛</div>
+  <div class="day ferry">
+    <div class="d-head"><span class="d-num">DAY 18</span><span class="d-route">Punta Arenas → Primera Angostura 渡轮 → Río Grande</span><span class="d-km mono">~280 km + 渡轮</span></div>
+    <div class="d-body">
+      <ul>
+        <li>Punta Arenas → Punta Delgada（Primera Angostura 渡口）约 160 km</li>
+        <li><span class="hl">Primera Angostura 渡轮</span>：最窄处约 3.8 km，单次渡轮约 30 分钟，但旺季排队可达 2–3 小时——务必早出发</li>
+        <li>渡过后进入阿根廷火地岛一侧，再次通关（阿根廷→阿根廷，但经过智利领土）</li>
+        <li>Ruta 3 南向进入火地岛：亚南极苔原、泥炭湿地，驼马（Guanaco）成群路旁</li>
+      </ul>
+      <div class="d-stay">Río Grande，火地岛</div>
+    </div>
+  </div>
+
+  <div class="seg-label">SEG 8 — Ruta 3 · 世界尽头</div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 19</span><span class="d-route">Río Grande → Ushuaia</span><span class="d-km mono">~210 km 铺装</span><span class="badge">★★</span></div>
+    <div class="d-body">
+      <ul>
+        <li>低矮灌木、泥炭湿地、山势渐起，亚南极景观逐步浓缩</li>
+        <li>抵达 <span class="hl">乌斯怀亚</span>：比格尔水道边，世界最南端城市，拥挤但独特</li>
+      </ul>
+      <div class="d-stay">Ushuaia</div>
+    </div>
+  </div>
+  <div class="day star">
+    <div class="d-head"><span class="d-num">DAY 20</span><span class="d-route">Ushuaia 全天</span><span class="badge">★★★ 终点</span></div>
+    <div class="d-body">
+      <ul>
+        <li><span class="hl">Tierra del Fuego 国家公园</span>：世界最南端可驾驶公路（Ruta 3 终点 3 km 碑）</li>
+        <li>比格尔水道游船：海狮礁、企鹅群岛、鸬鹚岩，约 2–3 h</li>
+        <li>乌斯怀亚监狱博物馆（世界尽头邮戳，纪念品中最值得的一种）</li>
+        <li>Cerro Martial 缆车或步道：俯瞰全城与水道</li>
+      </ul>
+      <div class="d-stay">Ushuaia</div>
+    </div>
+  </div>
+  <div class="day">
+    <div class="d-head"><span class="d-num">DAY 21</span><span class="d-route">Ushuaia 飞出</span></div>
+    <div class="d-body">还车（须确认异地还车是否可行）。飞布宜诺斯艾利斯中转，或直飞目的地。行程收尾。</div>
+  </div>
+</section>
+
+</div><!-- /trip2 -->
+
+<!-- ════ SHARED SECTIONS ════ -->
+
+<section>
+  <h2>最大变量：租车跨境问题</h2>
+  <div class="warn">
+    <strong>核心矛盾：</strong>陆路抵达乌斯怀亚必须过境智利，但多数阿根廷租车公司<strong>明确禁止</strong>将车辆开入智利。这是整个行程唯一不可绕开的单点障碍，须在预订前解决。
+  </div>
+  <div class="card">
+    <ul>
+      <li><strong>解法 A（最优）：</strong>找允许阿根廷↔智利双向跨境的租车公司。通常需签署额外许可文件（Permiso de Circulación），费用约 +USD 50–100。目前 Hertz、Europcar 阿根廷部分车场据称可申请，需逐一致电确认并索要书面文件——口头承诺在边境无效。</li>
+      <li><strong>解法 B：</strong>分段租车——在里奥加耶戈斯还掉阿根廷的车，过境后在蓬塔阿雷纳斯或乌斯怀亚另租。行程碎片化，换车麻烦，成本高，但规避了合同禁令。</li>
+      <li><strong>解法 C：</strong>直飞乌斯怀亚，放弃大陆段，仅在乌斯怀亚本地短租做南部小环线。最简方案，但失去 Ruta 40 荒原体验，也基本放弃了精华段（巴里洛切→卡拉法特仍需另行安排）。</li>
+    </ul>
+    <p class="note">以上三种解法须在<strong>预订前取得书面确认</strong>，任何口头承诺在边检不具备效力。</p>
+  </div>
+</section>
+
+<section>
+  <h2>四种行程结构</h2>
+  <div class="alt-grid">
+    <div class="alt-card">
+      <div class="alt-n">方案 A</div>
+      <h3>全程自驾<br>布宜→乌斯怀亚</h3>
+      <p>从布宜诺斯艾利斯出发，走完整条 Ruta 40 + Ruta 3，约 3,500 km。史诗感强，但前段潘帕斯（约 1,600 km）风景价值有限，耗费大量时间。</p>
+      <div class="alt-tag">2–3 周 / 需跨境 / 潘帕斯段是填充</div>
+    </div>
+    <div class="alt-card rec">
+      <div class="alt-n">方案 B ★ 推荐</div>
+      <h3>飞抵巴里洛切<br>驾至卡拉法特</h3>
+      <p>跳过无聊的潘帕斯段，专注巴塔哥尼亚核心（精华段 Tab 1）。无需跨境，租车最简单，10–14 天即可覆盖所有高潮点。</p>
+      <div class="alt-tag">10–14 天 / 无跨境 / 最优性价比</div>
+    </div>
+    <div class="alt-card">
+      <div class="alt-n">方案 C</div>
+      <h3>飞抵乌斯怀亚<br>北上至卡拉法特</h3>
+      <p>先打世界尽头，再北上。行程逆向，逻辑上可行，但乌斯怀亚↔卡拉法特之间陆路仍须过境智利（或选择飞一段）。</p>
+      <div class="alt-tag">~10 天 / 跨境仍难逃 / 逆向逻辑</div>
+    </div>
+    <div class="alt-card">
+      <div class="alt-n">方案 D</div>
+      <h3>仅飞卡拉法特<br>放弃乌斯怀亚</h3>
+      <p>彻底回避跨境问题。以卡拉法特为中心，探索冰川和查尔滕。牺牲火地岛，但行程最简洁，适合时间紧张的情况。</p>
+      <div class="alt-tag">7–10 天 / 零跨境 / 最简</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>路况与实用要点</h2>
+  <div class="card">
+    <ul>
+      <li><strong>车辆</strong>：SUV 或高底盘车强烈推荐。Ruta 40 砾石段磨损大，确认租车配有至少一条好备胎，并明确允许驶上非铺装路面。</li>
+      <li><strong>燃油</strong>：巴塔哥尼亚油站间距可达 150–200 km，部分路段更长。见到加油站必须加满，不赌余量。</li>
+      <li><strong>通讯</strong>：Ruta 40 中段（Perito Moreno 镇附近至 Bajo Caracoles 一带）完全无手机信号，绵延超过 200 km。卫星通讯器（如 Garmin inReach）强烈推荐。</li>
+      <li><strong>风</strong>：巴塔哥尼亚以风力著称，草原段横风强劲，开车须留意侧风；徒步时风速可突变，备好防风层。</li>
+      <li><strong>换汇</strong>：阿根廷比索历史性波动，blue rate（并行汇率）与官方汇率差距可大。携带美元现钞，在合法 casa de cambio 换汇，可比刷卡节省 20–40%。</li>
+      <li><strong>季节</strong>：仅 12 月–3 月（南半球夏季）可靠。其余月份道路可能封闭，白昼极短，极端天气频发。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>预算量级 · 单人（方案 B 精华段参考）</h2>
+  <div class="card">
+    <table class="budget">
+      <tr><td>国际机票（美国→布宜 + 卡拉法特→美国，旺季）</td><td>USD 1,200–2,000</td></tr>
+      <tr><td>国内段：布宜→巴里洛切（飞）</td><td>USD 150–350</td></tr>
+      <tr><td>租车 ~12 天，SUV 异地单程</td><td>USD 1,500–2,800</td></tr>
+      <tr><td>油费（约 2,500 km）</td><td>USD 200–400</td></tr>
+      <tr><td>住宿 ~12 晚（El Chaltén / El Calafate 旺季偏贵）</td><td>USD 900–1,800</td></tr>
+      <tr><td>冰川票 + 公园票 + 导览（Cueva de las Manos 等）</td><td>USD 200–400</td></tr>
+      <tr><td>餐饮</td><td>USD 400–700</td></tr>
+      <tr class="total"><td>合计量级</td><td>USD 4,500–8,500</td></tr>
+    </table>
+    <p class="note">以上为美元计价量级，blue rate 换汇可大幅降低实际支出。阿根廷经济状况多变，汇率以出发前实时数据为准。若延伸至乌斯怀亚（方案 A 或 B+南延），加上约 USD 1,000–1,800。</p>
+  </div>
+</section>
+
+<section>
+  <h2>通用清单</h2>
+  <div class="card check">
+    <label><input type="checkbox"><span>护照有效期 6 个月以上；核实阿根廷 / 智利对持有国签证的免签政策及停留上限</span></label>
+    <label><input type="checkbox"><span>H-1B 持有者：确认离美时间窗口与行程匹配；备好 approval notice + 工资单 + 在职证明回美</span></label>
+    <label><input type="checkbox"><span>美国驾照（阿根廷 / 智利承认）+ 国际驾照（IAA 版本，建议备用）</span></label>
+    <label><input type="checkbox"><span>卫星通讯器（Garmin inReach 或同类）——无信号区超 200 km，不带即赌命</span></label>
+    <label><input type="checkbox"><span>美元现钞（用于 casa de cambio 换汇，建议 USD 500–1,000 备用）</span></label>
+    <label><input type="checkbox"><span>防风防水外套（Gore-Tex 级别；巴塔哥尼亚风力非常规）</span></label>
+    <label><input type="checkbox"><span>SPF 50+ 防晒（纬度高、紫外线强，尤其冰川反射）</span></label>
+    <label><input type="checkbox"><span>备用轮胎确认（砾石段；向租车公司核实已配并检查胎况）</span></label>
+    <label><input type="checkbox"><span>行驶记录仪 / 离线地图（maps.me 或 OsmAnd，下载阿根廷 + 智利离线包）</span></label>
+  </div>
+</section>
+
+<section>
+  <h2>待确认清单</h2>
+  <div class="card check">
+    <label><input type="checkbox"><span>哪家租车公司允许阿根廷↔智利跨境——索要书面 Permiso de Circulación，确认费用</span></label>
+    <label><input type="checkbox"><span>Primera Angostura 渡轮：是否需要预约车辆（或纯现场排队）；旺季排队实际时长</span></label>
+    <label><input type="checkbox"><span>智利过境文件要求：护照 + 车辆文件 + 保险是否互认；带什么材料</span></label>
+    <label><input type="checkbox"><span>Monte Aymond 口岸（Río Gallegos→Punta Arenas）当前实际通关时长</span></label>
+    <label><input type="checkbox"><span>Bajo Caracoles 唯一旅馆：当季是否营业，是否可预约</span></label>
+    <label><input type="checkbox"><span>Cueva de las Manos 当季导览班次、出发地（Perito Moreno 镇或洞穴入口）、价格</span></label>
+    <label><input type="checkbox"><span>H-1B：离美天数限制与行程时长匹配；回美凭证备妥</span></label>
+    <label><input type="checkbox"><span>阿根廷入境携带美元现钞申报金额上限</span></label>
+    <label><input type="checkbox"><span>El Chaltén 旺季住宿（12–2 月）提前预订窗口，大约出发前几个月开放</span></label>
+  </div>
+  <p class="note">勾选状态仅当前会话有效，刷新重置——正式跟踪请移入你的清单工具。</p>
+</section>
+
+</main>
+<footer>BARILOCHE · RUTA 40 · EL CHALTÉN · PERITO MORENO GLACIER · TIERRA DEL FUEGO · USHUAIA</footer>
+
+<script>
+const C={andes:'#1a2e3e',gold:'#c89438',ice:'#4a9eb5',wind:'#b85c2a'};
+const map=L.map('map',{zoomControl:true}).setView([-47,-70],5);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:13,minZoom:3,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+
+function dot(g,ll,name,day,star){
+  L.circleMarker(ll,{radius:star?8:6,color:'#fff',weight:2,fillColor:star?C.gold:C.andes,fillOpacity:1})
+   .bindPopup('<span class="d">'+(day||'')+'</span><b>'+name+'</b>').addTo(g);
+}
+function ferry(g,pts){L.polyline(pts,{color:C.ice,weight:3.5,dashArray:'10 8',opacity:.9}).addTo(g);}
+function border(g,pts){L.polyline(pts,{color:C.wind,weight:3,dashArray:'4 7',opacity:.8}).addTo(g);}
+function styleFor(k){return k==='gravel'?{color:C.gold,weight:4,opacity:1,dashArray:'7 6'}:{color:C.andes,weight:4,opacity:.9};}
+function fbStyle(k){const s=styleFor(k);s.opacity=.4;s.dashArray='3 7';return s;}
+
+let pending=0,failed=0;
+function setStatus(){
+  const el=document.getElementById('status');
+  if(pending>0){el.style.opacity='1';el.innerHTML='<span class="dot"></span>正在加载公路走向… 剩 '+pending+' 段';return;}
+  el.innerHTML=failed>0?('✓ 已加载（'+failed+' 段回退示意线）'):'✓ 公路走向已加载';
+  setTimeout(function(){el.style.opacity='0';},failed?4500:2000);
+}
+async function road(g,chain,kind){
+  pending++;setStatus();
+  const coords=chain.map(function(p){return p[1]+','+p[0];}).join(';');
+  const url='https://router.project-osrm.org/route/v1/driving/'+coords+'?overview=full&geometries=geojson';
+  try{
+    const r=await fetch(url);if(!r.ok)throw 0;
+    const j=await r.json();if(!j.routes||!j.routes[0])throw 0;
+    L.polyline(j.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];}),styleFor(kind)).addTo(g);
+  }catch(e){failed++;L.polyline(chain,fbStyle(kind)).addTo(g);}
+  finally{pending--;setStatus();}
+}
+
+const P={
+  bari:[-41.133,-71.310],
+  bolson:[-41.959,-71.536],
+  esq:[-42.906,-71.320],
+  pm_town:[-46.547,-70.930],
+  cueva:[-47.148,-70.668],
+  bajoc:[-47.454,-70.921],
+  chalten:[-49.330,-72.886],
+  calafate:[-50.338,-72.269],
+  gallegos:[-51.623,-69.218],
+  cabov:[-52.340,-68.370],
+  punta:[-53.164,-70.908],
+  p_ang:[-52.620,-69.533],
+  riogrande:[-53.788,-67.707],
+  ushuaia:[-54.801,-68.303]
+};
+
+/* TRIP 1 */
+const t1=L.layerGroup().addTo(map);
+road(t1,[P.bari,P.bolson,P.esq],'road');
+road(t1,[P.esq,P.pm_town],'gravel');
+road(t1,[P.pm_town,P.cueva,P.bajoc],'gravel');
+road(t1,[P.bajoc,P.chalten],'gravel');
+road(t1,[P.chalten,P.calafate],'road');
+
+dot(t1,P.bari,'巴里洛切 Bariloche','DAY 1–2',true);
+dot(t1,P.bolson,'El Bolsón','DAY 3');
+dot(t1,P.esq,'Esquel','DAY 3–4');
+dot(t1,P.pm_town,'Perito Moreno（镇）','DAY 5–6');
+dot(t1,P.cueva,'Cueva de las Manos','DAY 6',true);
+dot(t1,P.bajoc,'Bajo Caracoles · 荒原高潮','DAY 7',true);
+dot(t1,P.chalten,'El Chaltén · 菲茨罗伊','DAY 8–10',true);
+dot(t1,P.calafate,'El Calafate · Perito Moreno 冰川','DAY 11–13',true);
+
+const B1=L.latLngBounds([P.bari,P.calafate,[P.calafate[0]-1,P.calafate[1]+3]]);
+
+/* TRIP 2 */
+const t2=L.layerGroup();
+road(t2,[P.calafate,P.gallegos],'road');
+road(t2,[P.gallegos,P.cabov],'road');
+border(t2,[P.gallegos,[-51.9,-69.8],[-52.4,-70.3],P.punta]);
+ferry(t2,[P.punta,[-52.4,-69.8],P.p_ang]);
+road(t2,[P.p_ang,P.riogrande,P.ushuaia],'road');
+
+dot(t2,P.calafate,'El Calafate','DAY 14 起');
+dot(t2,P.gallegos,'Río Gallegos','DAY 14–15');
+dot(t2,P.cabov,'Cabo Vírgenes · 大陆最南','DAY 15',true);
+dot(t2,P.punta,'Punta Arenas（智利）','DAY 16–17',true);
+dot(t2,P.p_ang,'Primera Angostura 渡口','DAY 18 渡海峡');
+dot(t2,P.riogrande,'Río Grande · 火地岛','DAY 18');
+dot(t2,P.ushuaia,'Ushuaia · 世界尽头','DAY 19–21',true);
+
+const B2=L.latLngBounds([P.calafate,P.ushuaia,[P.ushuaia[0]-1,P.ushuaia[1]+2]]);
+
+function show(n){
+  document.getElementById('tab1').setAttribute('aria-selected',n===1?'true':'false');
+  document.getElementById('tab2').setAttribute('aria-selected',n===2?'true':'false');
+  document.getElementById('trip1').classList.toggle('active',n===1);
+  document.getElementById('trip2').classList.toggle('active',n===2);
+  if(n===1){map.removeLayer(t2);t1.addTo(map);} else {map.removeLayer(t1);t2.addTo(map);}
+  map.invalidateSize();
+  map.fitBounds(n===1?B1:B2,{padding:[30,30]});
+  window.scrollTo({top:0});
+}
+map.fitBounds(B1,{padding:[30,30]});
+</script>
+</body>
+</html>
